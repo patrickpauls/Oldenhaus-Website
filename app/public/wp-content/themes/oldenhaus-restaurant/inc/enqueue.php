@@ -75,3 +75,41 @@ function oldenhaus_schriften_vorladen(): void {
 	}
 }
 add_action( 'wp_head', 'oldenhaus_schriften_vorladen', 1 );
+
+/**
+ * Entfernt das Block-Stylesheet auf Seiten, die gar keine Blöcke enthalten.
+ *
+ * WordPress lädt rund 20 KB Block-CSS auf jeder Seite, auch wenn keiner der Blöcke
+ * vorkommt. Auf dieser Website sind alle Inhalte über eigene Vorlagen und ACF-Felder
+ * aufgebaut; der Blockeditor kommt allenfalls auf Impressum und Datenschutz zum Einsatz.
+ *
+ * Geprüft wird am Inhalt selbst, nicht an einer Liste von Vorlagen: Sobald der Kunde
+ * irgendwo doch einen Block einfügt, lädt das Stylesheet von allein wieder mit. So kann
+ * sich niemand versehentlich das Layout zerschießen.
+ */
+function oldenhaus_ungenutztes_block_css_entfernen(): void {
+	$beitrag = get_queried_object();
+
+	// Im Zweifel nichts entfernen.
+	if ( ! $beitrag instanceof WP_Post ) {
+		return;
+	}
+
+	if ( has_blocks( $beitrag->post_content ) ) {
+		return;
+	}
+
+	wp_dequeue_style( 'wp-block-library' );
+	wp_dequeue_style( 'wp-block-library-theme' );
+	wp_dequeue_style( 'classic-theme-styles' );
+
+	/*
+	 * Die globalen Blockstile hängen in WordPress 7.1 an zwei Stellen:
+	 * an 'wp_enqueue_scripts' und zusätzlich an 'wp_footer' mit Priorität 1
+	 * (siehe wp-includes/default-filters.php). Ein blosses wp_dequeue_style()
+	 * greift deshalb nur gegen den ersten Aufruf - der zweite meldet sie wieder an.
+	 */
+	wp_dequeue_style( 'global-styles' );
+	remove_action( 'wp_footer', 'wp_enqueue_global_styles', 1 );
+}
+add_action( 'wp_enqueue_scripts', 'oldenhaus_ungenutztes_block_css_entfernen', 100 );

@@ -40,7 +40,13 @@ function restaurant_basis_post_type_faq_registrieren(): void {
 			'public'              => false,
 			'show_ui'             => true,
 			'show_in_menu'        => true,
-			'show_in_rest'        => true,
+			/*
+			 * Keine REST-Schnittstelle. Der Editor braucht sie nicht, weil 'supports'
+			 * kein 'editor' enthält – es gibt also keinen Blockeditor zu bedienen.
+			 * Mit true wären dagegen auch ausgeblendete Einträge weiterhin öffentlich
+			 * über /wp-json/ abrufbar gewesen, obwohl sie im Frontend verschwinden.
+			 */
+			'show_in_rest'        => false,
 			'publicly_queryable'  => false,
 			'exclude_from_search' => true,
 			'has_archive'         => false,

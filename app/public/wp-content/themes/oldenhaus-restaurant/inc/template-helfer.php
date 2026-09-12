@@ -43,7 +43,7 @@ function oldenhaus_telefon_link(): string {
  * Ob eine nutzbare Telefonnummer vorliegt.
  */
 function oldenhaus_hat_telefon(): bool {
-	return '' !== oldenhaus_telefon_link();
+	return oldenhaus_inhalte_verfuegbar() && restaurant_basis_hat_telefon();
 }
 
 /**
@@ -301,6 +301,19 @@ function oldenhaus_hat_hero(): bool {
 function oldenhaus_galerie_auf_datei_verlinken( array $werte ): array {
 	$werte['link'] = 'file';
 
+	/*
+	 * Bildgroesse ebenfalls festlegen. Ohne diese Zeile nimmt WordPress die
+	 * Vorschaugroesse: 150 x 150 Pixel, hart quadratisch beschnitten. Das Stylesheet
+	 * zieht sie anschliessend auf Spaltenbreite auf - sichtbar unscharf, und die
+	 * Mauerwerk-Optik waere unmoeglich, weil alle Kacheln gleich hoch waeren.
+	 *
+	 * "large" behaelt das Seitenverhaeltnis bei, liefert genug Pixel fuer hohe
+	 * Bildschirmaufloesungen und bringt srcset mit. Bewusst hier erzwungen und nicht
+	 * dem Kunden ueberlassen: Im Galerie-Dialog ist "Vorschaubild" die Voreinstellung,
+	 * und niemand soll sich die Galerie mit einem Klick zerschiessen koennen.
+	 */
+	$werte['size'] = 'large';
+
 	return $werte;
 }
 add_filter( 'shortcode_atts_gallery', 'oldenhaus_galerie_auf_datei_verlinken' );
@@ -318,3 +331,30 @@ function oldenhaus_anhangseiten_umleiten(): void {
 	}
 }
 add_action( 'template_redirect', 'oldenhaus_anhangseiten_umleiten' );
+
+/**
+ * Erlaubte HTML-Auszeichnung für Inhalte, die Bilder enthalten.
+ *
+ * wp_kses_post() streicht `srcset` und `sizes` aus img-Elementen. Bei der Galerie
+ * bedeutete das: WordPress erzeugt die responsiven Bildquellen korrekt, und das
+ * Escaping wirft sie anschließend weg – jedes Gerät lädt dann dieselbe große Datei.
+ *
+ * Statt auf das Escaping zu verzichten, wird die Liste hier um genau die Attribute
+ * erweitert, die WordPress selbst ausgibt. Alles andere bleibt gefiltert.
+ */
+function oldenhaus_erlaubtes_html_mit_bildern(): array {
+	$erlaubt = wp_kses_allowed_html( 'post' );
+
+	$erlaubt['img'] = array_merge(
+		$erlaubt['img'] ?? array(),
+		array(
+			'srcset'        => true,
+			'sizes'         => true,
+			'loading'       => true,
+			'decoding'      => true,
+			'fetchpriority' => true,
+		)
+	);
+
+	return $erlaubt;
+}

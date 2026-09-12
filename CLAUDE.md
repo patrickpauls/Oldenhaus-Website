@@ -114,8 +114,8 @@ oEmbed-Erkennung. Wird bei jeder Abnahme neu geprueft, siehe „Pruefungen".
 - [x] Texte als freigabepflichtige Entwuerfe
 - [x] Bilder: 15 Uebergangsbilder aus der WordPress-Fotodatenbank (CC0)
 - [x] Haertung inkl. XML-RPC-Sperre und Login-Begrenzung
-- [ ] Unabhaengige Review durch einen Subagenten
-- [ ] GitHub
+- [x] Unabhaengige Review durch einen Subagenten, Befunde behoben
+- [ ] GitHub (SSH-Schluessel erzeugt, wartet auf Hinterlegung bei GitHub)
 
 ### Gepruefte Ergebnisse
 
@@ -123,7 +123,7 @@ oEmbed-Erkennung. Wird bei jeder Abnahme neu geprueft, siehe „Pruefungen".
 |---|---|
 | Alle Seiten | HTTP 200, 404 greift, keine PHP-Fehler |
 | Externe Anfragen | keine. `s.w.org` abgeschaltet; `api.w.org` ist nur ein rel-Namensraum, Instagram ein Klick-Link |
-| Sicherheits-Header | alle gesetzt, CSP `default-src 'self'` |
+| Sicherheits-Header | alle gesetzt, CSP `default-src 'self'` - auch auf `wp-login.php` (dort feuert `send_headers` nicht, deshalb zusaetzlich an `login_init`) |
 | `?author=1` | 301 auf die Startseite, kein Benutzername |
 | `/wp-json/wp/v2/users` | abgewiesen (404) |
 | XML-RPC | 403, bevor eine Methode laeuft |
@@ -131,9 +131,35 @@ oEmbed-Erkennung. Wird bei jeder Abnahme neu geprueft, siehe „Pruefungen".
 | Login-Sperre | greift ab dem 5. Fehlversuch, Hinweis sichtbar, verraet keine Konten |
 | Gericht „nicht verfuegbar" | verschwindet im Frontend, bleibt im Backend, umkehrbar |
 | Theme-Wechsel | mit Standard-Theme bleiben 12 Gerichte, 5 Fragen, 5 Kategorien und die Kontaktdaten erreichbar |
-| Inline-Styles im Frontend | keine (nur zwei im Backend-Widget, begruendet) |
+| Inline-Styles | im Frontend keine. Im Backend neun style-Attribute fuer kleine Farbmarkierungen in Uebersichtslisten - dafuer eine eigene Admin-Stylesheet-Datei anzulegen waere unverhaeltnismaessig. Dazu ein dokumentierter style-Block in header.php fuer den Fall ohne JavaScript. |
 
-### Zwei Funde, die ohne Pruefung durchgerutscht waeren
+### Unabhaengige Review
+
+Ein Subagent mit frischem Kontext hat den fertigen Stand gegen Sicherheits-, Design-,
+Code-Struktur- und Drittanbieter-Richtlinien geprueft (Schritt 6 des Skills). Er hat die
+Drittanbieter-Freiheit eigenstaendig nachgewiesen und die Design-Treue Token fuer Token
+bestaetigt - aber auch drei Mangel gefunden, die beim Bauen durchgerutscht waren:
+
+| Fund | Behoben durch |
+|---|---|
+| Die Website lief auf **Englisch** (`lang="en-US"`, englisches Backend, englischer 404-Titel) - Verstoss gegen die Spec und genau die Huerde fuer den Kunden, die der Rest des Projekts abbaut | `de_DE` installiert und aktiviert, Zeitzone Europe/Berlin |
+| Die **Galerie zeigte 150-px-Vorschaubilder**, quadratisch beschnitten und auf Spaltenbreite hochskaliert. Die Mauerwerk-Optik war damit unmoeglich, weil alle Kacheln gleich hoch waren | Bildgroesse `large` im Galerie-Filter erzwungen |
+| Die **Sicherheits-Header fehlten auf `wp-login.php`** - ausgerechnet auf der einzigen Seite, die Eingaben entgegennimmt. `send_headers` feuert dort nicht, weil `wp-login.php` niemals `wp()` aufruft | zusaetzlich an `login_init` gehaengt |
+
+Beim Beheben kam ein vierter Fehler ans Licht: `wp_kses_post()` entfernt `srcset` aus
+img-Elementen. Das eigene Escaping warf also die responsiven Bildquellen weg, die
+WordPress korrekt erzeugt hatte - jedes Geraet haette dieselbe grosse Datei geladen.
+Statt auf das Escaping zu verzichten, ist die Erlaubnisliste jetzt um genau die
+Attribute erweitert, die WordPress selbst ausgibt.
+
+Weitere behobene Punkte: eine gueltige E-Mail-Adresse wurde bei einem Tippfehler
+geloescht; ausgeblendete Gerichte blieben ueber die REST-Schnittstelle sichtbar;
+Hochkant-Bloecke auf "Ueber uns" holten die quere Bildgroesse und wurden hochskaliert;
+Rechtslinks in der Fusszeile waren zu kleine Trefferflaechen; automatisch eingebettete
+Inhalte waeren von der CSP wortlos blockiert worden; rund 9 KB ungenutztes Block-CSS
+auf jeder Seite (Startseite jetzt 14,9 statt 24,4 KB).
+
+### Zwei Funde aus der eigenen Pruefung
 
 1. **XML-RPC blieb trotz der ueblichen Filter offen.** `xmlrpc_enabled` betrifft nur
    angemeldete Methoden, und `xmlrpc_methods` kann `system.multicall` nicht entfernen,
@@ -168,6 +194,25 @@ Hunde erlaubt sind – wird sie nicht erfunden, sondern der Eintrag bleibt Entwu
 damit im Frontend unsichtbar.
 
 ---
+
+## Vor dem Livegang auf dem Zielserver
+
+Diese Punkte lassen sich lokal nicht abschliessen, weil LocalWP mit nginx laeuft und
+manche Dateien zur Entwicklungsumgebung gehoeren.
+
+| Aufgabe | Warum |
+|---|---|
+| `wp-content/uploads/.htaccess` pruefen | Verhindert PHP-Ausfuehrung im Upload-Ordner. Wirkt nur unter **Apache**. Laeuft der Zielserver mit nginx, gehoert stattdessen in die Server-Konfiguration: `location ~* /wp-content/uploads/.*\.(php\|phar\|phtml)$ { deny all; }` |
+| `DISALLOW_FILE_EDIT` in die `wp-config.php` | Steht aktuell im Theme. Dort greift es nur, solange das Theme geladen wird - in der wp-config gilt es immer |
+| `/readme.html` und `/license.txt` loeschen | Verraten die WordPress-Version, die sonst aufwendig versteckt wird |
+| `/local-xdebuginfo.php` loeschen | Gehoert zu LocalWP und gibt einen vollstaendigen phpinfo-Dump samt Serverpfaden aus. Darf unter keinen Umstaenden live gehen |
+| Automatische Core-Updates aktiv lassen | Sicherheitsaktualisierungen sollen ohne Zutun ankommen |
+| HTTPS erzwingen und `upgrade-insecure-requests` zur CSP ergaenzen | Lokal bewusst weggelassen, weil die Entwicklungsumgebung ueber http laeuft |
+| Impressum und Datenschutzerklaerung befuellen | Rechtlich zwingend vor der Veroeffentlichung |
+
+Nicht behoben, bewusst: `/wp-content/plugins/advanced-custom-fields/readme.txt` nennt
+die ACF-Version. Das liesse sich nur serverseitig sperren und gilt als geringfuegig -
+es steht hier, damit es eine Entscheidung ist und kein Versehen.
 
 ## Pruefungen
 

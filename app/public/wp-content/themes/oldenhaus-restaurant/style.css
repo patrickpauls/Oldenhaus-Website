@@ -1002,7 +1002,15 @@ img {
   gap: 20px;
 }
 
-.site-footer__unten a { text-decoration: none; }
+.site-footer__unten a {
+  text-decoration: none;
+  /* Trefferflaeche wie ueberall sonst: mindestens 44 px hoch. Impressum und
+     Datenschutz sind sonst ~20 px hohe Textlinks und am Telefon schwer zu treffen. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-block: 4px;
+}
 .site-footer__unten a:hover { text-decoration: underline; }
 
 

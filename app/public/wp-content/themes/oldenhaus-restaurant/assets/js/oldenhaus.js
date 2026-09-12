@@ -338,10 +338,18 @@
 
 	/* ------------------------------------------------------------------ */
 
+	/*
+	 * Die Navigation zuerst verdrahten.
+	 *
+	 * Wirft eine der anderen Funktionen eine Ausnahme, bliebe das Menue am Telefon
+	 * sonst unerreichbar - und das noscript-Netz greift nicht, weil JavaScript ja
+	 * aktiv ist. Alles Weitere ist Beiwerk und darf notfalls ausfallen.
+	 */
+	menueVorbereiten();
+
 	kopfzeileBeobachten();
 	slideshowStarten();
 	heuteAnzeigen();
 	heutigenTagMarkieren();
-	menueVorbereiten();
 	lightboxVorbereiten();
 }());

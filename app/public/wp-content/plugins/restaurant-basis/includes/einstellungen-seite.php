@@ -266,9 +266,15 @@ function restaurant_basis_einstellungen_pruefen( $eingabe ): array {
 			add_settings_error(
 				RESTAURANT_BASIS_OPTION,
 				'email_ungueltig',
-				'Die E-Mail-Adresse sieht nicht gültig aus und wurde nicht gespeichert.',
+				'Die E-Mail-Adresse sieht nicht gültig aus. Die bisher hinterlegte Adresse bleibt unverändert.',
 				'error'
 			);
+
+			// Wichtig: den Schlüssel gar nicht erst schreiben. Sonst würde eine gültige,
+			// bereits hinterlegte Adresse durch das leere Ergebnis von sanitize_email()
+			// ersetzt – ein Tippfehler löschte dann die Adresse, die fürs Impressum
+			// gesetzlich nötig ist.
+			return $sauber;
 		}
 
 		$sauber['email'] = $email;

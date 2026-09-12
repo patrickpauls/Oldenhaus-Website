@@ -46,7 +46,7 @@ $oldenhaus_galerie = function_exists( 'get_field' )
 		 * im Feld steht.
 		 */
 		if ( '' !== trim( $oldenhaus_galerie ) ) {
-			echo wp_kses_post( do_shortcode( $oldenhaus_galerie ) );
+			echo wp_kses( do_shortcode( $oldenhaus_galerie ), oldenhaus_erlaubtes_html_mit_bildern() );
 		} else {
 			echo '<p class="fehlt">Die Bilder folgen nach dem Fototermin.</p>';
 		}

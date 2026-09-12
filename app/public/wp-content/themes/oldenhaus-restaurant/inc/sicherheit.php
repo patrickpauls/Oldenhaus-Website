@@ -104,6 +104,22 @@ function oldenhaus_oembed_aufraeumen(): void {
 	remove_action( 'wp_head', 'wp_oembed_add_discovery_links', 4 );
 	remove_action( 'wp_head', 'wp_oembed_add_discovery_links' );
 	remove_action( 'wp_head', 'wp_oembed_add_host_js' );
+
+	/*
+	 * Auch das automatische Einbetten abschalten.
+	 *
+	 * Fügt jemand später eine YouTube- oder Maps-Adresse in einen Text ein, baut
+	 * WordPress daraus von selbst ein iframe – das die Inhaltsrichtlinie weiter unten
+	 * wortlos blockiert. Rechtlich ist das Blockieren richtig, praktisch sähe man nur
+	 * eine leere Stelle ohne Erklärung. Ohne automatisches Einbetten bleibt die
+	 * Adresse als Text stehen: sichtbar, nachvollziehbar, und ohne Anfrage an Dritte.
+	 *
+	 * Soll später bewusst etwas eingebettet werden, gehört ohnehin eine
+	 * Einwilligungslösung dazu.
+	 */
+	if ( isset( $GLOBALS['wp_embed'] ) && $GLOBALS['wp_embed'] instanceof WP_Embed ) {
+		remove_filter( 'the_content', array( $GLOBALS['wp_embed'], 'autoembed' ), 8 );
+	}
 }
 add_action( 'init', 'oldenhaus_oembed_aufraeumen' );
 
@@ -520,3 +536,13 @@ function oldenhaus_sicherheits_header(): void {
 	}
 }
 add_action( 'send_headers', 'oldenhaus_sicherheits_header' );
+
+/*
+ * Die Anmeldeseite zusaetzlich versorgen.
+ *
+ * 'send_headers' feuert in WP::send_headers() und damit nur im normalen
+ * Seitenaufbau. wp-login.php ruft wp() nie auf - die Header fehlten dort also,
+ * ausgerechnet auf der einzigen Seite der Installation, die ueberhaupt Eingaben
+ * entgegennimmt und die am haeufigsten angegriffen wird.
+ */
+add_action( 'login_init', 'oldenhaus_sicherheits_header' );

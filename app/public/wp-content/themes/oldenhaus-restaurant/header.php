@@ -64,7 +64,9 @@ $oldenhaus_ueber_hero = oldenhaus_hat_hero();
 	?>
 	<noscript>
 		<style>
-			.hauptnav[hidden] { display: block; position: static; }
+			/* Absolute Lage beibehalten, sonst rutscht die Navigation als Block
+			   zwischen Wortmarke und Anruf-Button in die Kopfzeile hinein. */
+			.hauptnav[hidden] { display: block; }
 			.menue-knopf { display: none; }
 		</style>
 	</noscript>

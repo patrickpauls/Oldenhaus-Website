@@ -45,17 +45,26 @@ $oldenhaus_einleitung = oldenhaus_feld( 'einleitung' );
 			++$oldenhaus_sichtbare;
 
 			// Jeder zweite sichtbare Block wird gedreht, damit die Bilder nicht
-			// stur untereinander in derselben Spalte stehen.
-			$oldenhaus_gedreht = ( 0 === $oldenhaus_sichtbare % 2 ) ? ' duo--gedreht' : '';
+			// stur untereinander in derselben Spalte stehen. Der gedrehte Block
+			// bekommt zusätzlich ein hochkantes Bild – das bringt Abwechslung ins
+			// Seitenbild, wie in den Layout-Grundsätzen gefordert.
+			$oldenhaus_ist_hochkant = ( 0 === $oldenhaus_sichtbare % 2 );
+			$oldenhaus_gedreht      = $oldenhaus_ist_hochkant ? ' duo--gedreht' : '';
 			?>
 			<section class="block duo<?php echo esc_attr( $oldenhaus_gedreht ); ?>">
 				<div class="duo__bild">
 					<?php
+					/*
+					 * Die Bildgröße muss zur Ausrichtung passen. Zuvor wurde immer die
+					 * quere Größe geholt und anschließend per CSS ins Hochformat
+					 * beschnitten – das Bild wurde dadurch aus zu wenig Pixeln
+					 * hochskaliert.
+					 */
 					oldenhaus_foto(
 						$oldenhaus_bild,
-						'oldenhaus-quer',
+						$oldenhaus_ist_hochkant ? 'oldenhaus-hochkant' : 'oldenhaus-quer',
 						'Foto folgt: Gastraum',
-						1 === $oldenhaus_sichtbare % 2 ? array() : array( 'foto--hochkant' )
+						$oldenhaus_ist_hochkant ? array( 'foto--hochkant' ) : array()
 					);
 					?>
 				</div>

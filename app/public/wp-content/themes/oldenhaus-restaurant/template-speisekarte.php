@@ -40,7 +40,7 @@ $oldenhaus_kategorien = function_exists( 'restaurant_basis_kategorien' )
 
 		<?php if ( empty( $oldenhaus_kategorien ) ) : ?>
 
-			<p class="fehlt" class="mt-gross">
+			<p class="fehlt mt-gross">
 				Die Speisekarte wird gerade eingepflegt.
 			</p>
 
@@ -88,7 +88,12 @@ $oldenhaus_kategorien = function_exists( 'restaurant_basis_kategorien' )
 								</div>
 
 								<?php if ( '' !== $oldenhaus_beschreibung ) : ?>
-									<p class="gericht__beschreibung"><?php echo esc_html( $oldenhaus_beschreibung ); ?></p>
+									<?php
+									// nl2br nach dem Escapen: Schreibt der Kunde die Zutaten
+									// auf mehrere Zeilen, bleiben die Umbrüche erhalten,
+									// ohne dass HTML aus dem Feld durchkommt.
+									?>
+									<p class="gericht__beschreibung"><?php echo nl2br( esc_html( $oldenhaus_beschreibung ) ); ?></p>
 								<?php endif; ?>
 							</li>
 						<?php endforeach; ?>

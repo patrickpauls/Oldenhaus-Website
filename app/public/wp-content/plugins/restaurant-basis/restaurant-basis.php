@@ -35,9 +35,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RESTAURANT_BASIS_VERSION', '1.0.0' );
 define( 'RESTAURANT_BASIS_PFAD', plugin_dir_path( __FILE__ ) );
-define( 'RESTAURANT_BASIS_DATEI', __FILE__ );
 
 require_once RESTAURANT_BASIS_PFAD . 'includes/post-type-gericht.php';
 require_once RESTAURANT_BASIS_PFAD . 'includes/post-type-faq.php';
