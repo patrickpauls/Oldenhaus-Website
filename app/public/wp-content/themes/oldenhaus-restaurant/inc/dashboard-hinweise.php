@@ -159,6 +159,13 @@ function oldenhaus_dashboard_widget_ausgeben(): void {
 	}
 
 	echo '<p>Diese Angaben fehlen noch. Jeder Punkt verschwindet von selbst, sobald er erledigt ist.</p>';
+
+	/*
+	 * Die beiden style-Attribute hier bleiben bewusst inline. Sie betreffen
+	 * ausschliesslich dieses eine Widget im Backend; eine eigene Admin-Stylesheet-Datei
+	 * samt Einbindung waere fuer zwei Regeln unverhaeltnismaessig. Im Frontend steht
+	 * dafuer kein einziges style-Attribut - dort gehoert alles ins Stylesheet.
+	 */
 	echo '<ul style="margin:0;padding:0;list-style:none">';
 
 	foreach ( $punkte as $punkt ) {

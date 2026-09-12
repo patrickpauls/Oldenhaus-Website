@@ -22,7 +22,7 @@ if ( '' === $oldenhaus_titel && '' === $oldenhaus_text ) {
 <section class="abschnitt" id="gutscheine">
 	<div class="wrap">
 		<h2><?php echo esc_html( '' !== $oldenhaus_titel ? $oldenhaus_titel : 'Gutscheine' ); ?></h2>
-		<div style="margin-top:12px">
+		<div class="mt-klein">
 			<?php oldenhaus_text_oder_hinweis( $oldenhaus_text, 'Text folgt' ); ?>
 		</div>
 	</div>

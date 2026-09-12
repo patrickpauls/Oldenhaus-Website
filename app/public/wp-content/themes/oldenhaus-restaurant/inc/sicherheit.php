@@ -285,13 +285,44 @@ add_action( 'admin_menu', 'oldenhaus_kommentarmenue_entfernen' );
 const OLDENHAUS_LOGIN_VERSUCHE_FREI = 5;
 
 /**
+ * Merkt sich innerhalb einer Anfrage, dass die Anmeldung wegen einer Sperre
+ * abgewiesen wurde.
+ *
+ * Nötig, weil die Vereinheitlichung der Fehlermeldung unten sonst auch den
+ * Sperrhinweis überschreiben würde – wer ausgesperrt ist, bekäme dann nur „Name oder
+ * Passwort stimmen nicht" zu sehen und würde endlos weiterprobieren, ohne zu erfahren,
+ * dass er schlicht warten muss.
+ *
+ * @param string|null $setzen Meldung setzen, oder null zum Auslesen.
+ */
+function oldenhaus_login_sperrmeldung( ?string $setzen = null ): string {
+	static $meldung = '';
+
+	if ( null !== $setzen ) {
+		$meldung = $setzen;
+	}
+
+	return $meldung;
+}
+
+/**
  * Vereinheitlicht die Fehlermeldung bei der Anmeldung.
  *
  * WordPress unterscheidet ab Werk zwischen „Benutzername unbekannt" und „Passwort
  * falsch". Damit lässt sich Schritt für Schritt herausfinden, welche Benutzernamen
  * existieren – und der Angriff auf das Passwort beschränken.
+ *
+ * Der Sperrhinweis bleibt als einzige Ausnahme erhalten: Er verrät nichts über
+ * vorhandene Konten, ist für rechtmäßige Nutzer aber die einzige Erklärung dafür,
+ * warum gerade gar nichts mehr geht.
  */
 function oldenhaus_anmeldefehler_vereinheitlichen(): string {
+	$sperrhinweis = oldenhaus_login_sperrmeldung();
+
+	if ( '' !== $sperrhinweis ) {
+		return esc_html( $sperrhinweis );
+	}
+
 	return 'Anmeldename oder Passwort stimmen nicht.';
 }
 add_filter( 'login_errors', 'oldenhaus_anmeldefehler_vereinheitlichen' );
@@ -406,13 +437,15 @@ function oldenhaus_gesperrte_anmeldung_abweisen( $benutzer, string $anmeldename 
 
 	$restminuten = max( 1, (int) ceil( ( $gesperrt_bis - time() ) / MINUTE_IN_SECONDS ) );
 
-	return new WP_Error(
-		'oldenhaus_zu_viele_versuche',
-		sprintf(
-			'Zu viele fehlgeschlagene Anmeldeversuche. Bitte versuche es in %d Minuten erneut.',
-			$restminuten
-		)
+	$hinweis = sprintf(
+		'Zu viele fehlgeschlagene Anmeldeversuche. Bitte versuche es in %d Minuten erneut.',
+		$restminuten
 	);
+
+	// Damit die Vereinheitlichung der Fehlermeldung diesen Hinweis stehen lässt.
+	oldenhaus_login_sperrmeldung( $hinweis );
+
+	return new WP_Error( 'oldenhaus_zu_viele_versuche', $hinweis );
 }
 add_filter( 'authenticate', 'oldenhaus_gesperrte_anmeldung_abweisen', 30, 2 );
 

@@ -40,7 +40,7 @@ $oldenhaus_kategorien = function_exists( 'restaurant_basis_kategorien' )
 
 		<?php if ( empty( $oldenhaus_kategorien ) ) : ?>
 
-			<p class="fehlt" style="margin-top:32px">
+			<p class="fehlt" class="mt-gross">
 				Die Speisekarte wird gerade eingepflegt.
 			</p>
 

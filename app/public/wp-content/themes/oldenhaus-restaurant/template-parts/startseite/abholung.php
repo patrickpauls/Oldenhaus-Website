@@ -25,14 +25,14 @@ if ( '' === $oldenhaus_titel && '' === $oldenhaus_text ) {
 	<div class="wrap duo duo--schmales-bild">
 
 		<div class="duo__bild">
-			<?php oldenhaus_foto( $oldenhaus_bild, 'oldenhaus-hochkant', 'Foto folgt: Pizzakarton auf dem Tresen', array( 'ph--hochkant' ) ); ?>
+			<?php oldenhaus_foto( $oldenhaus_bild, 'oldenhaus-hochkant', 'Foto folgt: Pizzakarton auf dem Tresen', array( 'foto--hochkant' ) ); ?>
 		</div>
 
 		<div>
 			<h2><?php echo esc_html( '' !== $oldenhaus_titel ? $oldenhaus_titel : 'Zum Mitnehmen' ); ?></h2>
 			<?php oldenhaus_text_oder_hinweis( $oldenhaus_text, 'Text folgt' ); ?>
 
-			<p style="margin-top:22px">
+			<p class="mt-mittel">
 				<?php oldenhaus_anruf_button( array( 'beschriftung' => $oldenhaus_knopf ) ); ?>
 			</p>
 		</div>

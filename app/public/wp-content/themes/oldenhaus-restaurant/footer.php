@@ -35,7 +35,7 @@ $oldenhaus_instagram = oldenhaus_instagram();
 					<p class="fehlt">Anschrift folgt</p>
 				<?php endif; ?>
 
-				<p style="margin-top:10px">
+				<p class="mt-klein">
 					<?php if ( oldenhaus_hat_telefon() ) : ?>
 						<a href="<?php echo esc_url( oldenhaus_telefon_link() ); ?>">
 							<?php echo esc_html( oldenhaus_telefon_anzeige() ); ?>
@@ -46,7 +46,7 @@ $oldenhaus_instagram = oldenhaus_instagram();
 				</p>
 
 				<?php if ( '' !== $oldenhaus_instagram ) : ?>
-					<p style="margin-top:10px">
+					<p class="mt-klein">
 						<?php
 						/*
 						 * Bewusst ein einfacher Link statt eines eingebetteten Feeds.
@@ -84,7 +84,7 @@ $oldenhaus_instagram = oldenhaus_instagram();
 			<div>
 				<h2>Tisch reservieren</h2>
 				<p>Ruf einfach an – wir nehmen deine Reservierung gern persönlich entgegen.</p>
-				<p style="margin-top:16px">
+				<p class="mt-mittel">
 					<?php oldenhaus_anruf_button(); ?>
 				</p>
 			</div>

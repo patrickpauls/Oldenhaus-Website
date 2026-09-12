@@ -30,7 +30,7 @@ if ( empty( $oldenhaus_zeiten ) ) {
 			<h2><?php echo esc_html( $oldenhaus_titel ); ?></h2>
 
 			<?php if ( '' !== $oldenhaus_text ) : ?>
-				<p style="margin-top:12px"><?php echo esc_html( $oldenhaus_text ); ?></p>
+				<p class="mt-klein"><?php echo esc_html( $oldenhaus_text ); ?></p>
 			<?php endif; ?>
 
 			<div class="anschrift">

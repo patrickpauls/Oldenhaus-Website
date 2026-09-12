@@ -55,7 +55,7 @@ $oldenhaus_einleitung = oldenhaus_feld( 'einleitung' );
 						$oldenhaus_bild,
 						'oldenhaus-quer',
 						'Foto folgt: Gastraum',
-						1 === $oldenhaus_sichtbare % 2 ? array() : array( 'ph--hochkant' )
+						1 === $oldenhaus_sichtbare % 2 ? array() : array( 'foto--hochkant' )
 					);
 					?>
 				</div>
@@ -64,7 +64,7 @@ $oldenhaus_einleitung = oldenhaus_feld( 'einleitung' );
 					<?php if ( '' !== $oldenhaus_titel ) : ?>
 						<h2><?php echo esc_html( $oldenhaus_titel ); ?></h2>
 					<?php endif; ?>
-					<div style="margin-top:12px">
+					<div class="mt-klein">
 						<?php oldenhaus_text_oder_hinweis( $oldenhaus_text, 'Text folgt' ); ?>
 					</div>
 				</div>

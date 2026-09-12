@@ -38,9 +38,14 @@ $oldenhaus_galerie = function_exists( 'get_field' )
 
 	<div class="galerie abschnitt">
 		<?php
-		if ( '' !== trim( wp_strip_all_tags( $oldenhaus_galerie ) ) || str_contains( $oldenhaus_galerie, '[gallery' ) ) {
-			// do_shortcode() wandelt den Galerie-Shortcode in das Standard-Markup um,
-			// das im Stylesheet die Mauerwerk-Optik bekommt.
+		/*
+		 * Nicht auf Textinhalt pruefen: Eine Galerie besteht nur aus Bildern, ihr
+		 * Textanteil ist leer. Und der Shortcode taucht hier nicht mehr auf, weil ACF
+		 * bei WYSIWYG-Feldern die Inhaltsfilter bereits angewendet hat - do_shortcode()
+		 * unten laeuft nur noch fuer den Fall, dass doch einmal ein roher Shortcode
+		 * im Feld steht.
+		 */
+		if ( '' !== trim( $oldenhaus_galerie ) ) {
 			echo wp_kses_post( do_shortcode( $oldenhaus_galerie ) );
 		} else {
 			echo '<p class="fehlt">Die Bilder folgen nach dem Fototermin.</p>';

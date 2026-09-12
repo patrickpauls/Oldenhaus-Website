@@ -32,7 +32,7 @@ if ( '' === $oldenhaus_titel && '' === $oldenhaus_text ) {
 			<h2><?php echo esc_html( '' !== $oldenhaus_titel ? $oldenhaus_titel : 'Feiern bei uns' ); ?></h2>
 			<?php oldenhaus_text_oder_hinweis( $oldenhaus_text, 'Text folgt' ); ?>
 
-			<p style="margin-top:22px">
+			<p class="mt-mittel">
 				<?php oldenhaus_anruf_button( array( 'beschriftung' => 'Feier anfragen' ) ); ?>
 			</p>
 		</div>

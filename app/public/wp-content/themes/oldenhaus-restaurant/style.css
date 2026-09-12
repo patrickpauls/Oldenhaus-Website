@@ -1028,7 +1028,18 @@ img {
   aspect-ratio: 4 / 3;
 }
 
-.ph--hochkant { aspect-ratio: 4 / 5; }
+/*
+  Hochkant-Vorgabe. Sie muss zweierlei koennen: eine leere Platzhalterflaeche in Form
+  bringen und ein echtes Foto beschneiden, ohne es zu verzerren. Deshalb greift sie
+  beim Platzhalter am Kasten selbst und beim Foto am Bild.
+*/
+.ph.foto--hochkant { aspect-ratio: 4 / 5; }
+
+.foto--hochkant img {
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  width: 100%;
+}
 
 /*
   Fehlender Text wird sichtbar als solcher markiert – bewusst kein Blindtext,
@@ -1049,6 +1060,21 @@ img {
   margin-right: 8px;
   vertical-align: middle;
 }
+
+
+/* Kleine Abstandshelfer.
+   Bewusst nur drei und nach ihrer Groesse benannt: So steht in keinem Template ein
+   style-Attribut, und die Abstaende bleiben an einer Stelle aenderbar. */
+.mt-klein  { margin-top: 12px; }
+.mt-mittel { margin-top: 22px; }
+.mt-gross  { margin-top: 32px; }
+
+/* Einfache Aufzaehlung im Fliesstext, etwa auf der 404-Seite. */
+.liste-einfach {
+  margin-top: 12px;
+  padding-left: 1.2em;
+}
+.liste-einfach li { margin-top: 6px; }
 
 
 /* ==========================================================================

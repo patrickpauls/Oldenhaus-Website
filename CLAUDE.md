@@ -107,14 +107,43 @@ oEmbed-Erkennung. Wird bei jeder Abnahme neu geprueft, siehe „Pruefungen".
 - [x] `reference/` in die Projektwurzel, Spec daneben abgelegt
 - [x] Schriften aus dem Moodboard extrahiert (4 × woff2, 79 KB) + OFL-Lizenzen
 - [x] Git-Repository, `.gitignore` (nur eigener Code, kein Core, keine Zugangsdaten)
-- [ ] Plugin `restaurant-basis`
-- [ ] Theme-Grundgeruest + Design-Tokens
-- [ ] Templates
-- [ ] Reaktivitaet
-- [ ] Seiten, Menues und Beispielinhalte
-- [ ] Texte und Bilder
-- [ ] Pruefungen + unabhaengige Review
+- [x] Plugin `restaurant-basis` (generisch, wiederverwendbar)
+- [x] Theme-Geruest, Design-Tokens, alle Seitenvorlagen
+- [x] Reaktivitaet (mobile first, 2 gezielte max-width-Ausnahmen)
+- [x] Seiten, Menues, Beispielinhalte (`tools/*.php`)
+- [x] Texte als freigabepflichtige Entwuerfe
+- [x] Bilder: 15 Uebergangsbilder aus der WordPress-Fotodatenbank (CC0)
+- [x] Haertung inkl. XML-RPC-Sperre und Login-Begrenzung
+- [ ] Unabhaengige Review durch einen Subagenten
 - [ ] GitHub
+
+### Gepruefte Ergebnisse
+
+| Pruefung | Ergebnis |
+|---|---|
+| Alle Seiten | HTTP 200, 404 greift, keine PHP-Fehler |
+| Externe Anfragen | keine. `s.w.org` abgeschaltet; `api.w.org` ist nur ein rel-Namensraum, Instagram ein Klick-Link |
+| Sicherheits-Header | alle gesetzt, CSP `default-src 'self'` |
+| `?author=1` | 301 auf die Startseite, kein Benutzername |
+| `/wp-json/wp/v2/users` | abgewiesen (404) |
+| XML-RPC | 403, bevor eine Methode laeuft |
+| WordPress-Version | nicht im Quelltext |
+| Login-Sperre | greift ab dem 5. Fehlversuch, Hinweis sichtbar, verraet keine Konten |
+| Gericht „nicht verfuegbar" | verschwindet im Frontend, bleibt im Backend, umkehrbar |
+| Theme-Wechsel | mit Standard-Theme bleiben 12 Gerichte, 5 Fragen, 5 Kategorien und die Kontaktdaten erreichbar |
+| Inline-Styles im Frontend | keine (nur zwei im Backend-Widget, begruendet) |
+
+### Zwei Funde, die ohne Pruefung durchgerutscht waeren
+
+1. **XML-RPC blieb trotz der ueblichen Filter offen.** `xmlrpc_enabled` betrifft nur
+   angemeldete Methoden, und `xmlrpc_methods` kann `system.multicall` nicht entfernen,
+   weil `IXR_Server::setCallbacks()` die `system.*`-Methoden erst *nach* dem Filter
+   hinzufuegt. Die Schnittstelle beantwortete `system.listMethods` weiterhin. Jetzt
+   wird die Anfrage per `XMLRPC_REQUEST` mit 403 abgewiesen.
+2. **Die Login-Sperre war unsichtbar.** Sie griff korrekt, aber die vereinheitlichte
+   Fehlermeldung ueberschrieb den Hinweis – ein ausgesperrter Nutzer haette endlos
+   weiterprobiert. Der Sperrhinweis ist jetzt die einzige Ausnahme von der
+   Vereinheitlichung; ueber vorhandene Konten verraet er nichts.
 
 ---
 
