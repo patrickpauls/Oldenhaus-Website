@@ -1,0 +1,41 @@
+# Versioniert wird ausschliesslich selbst geschriebener Code.
+#
+# Vorgehen: erst alles ignorieren, dann gezielt die eigenen Ordner freigeben.
+# Das ist bewusst so herum gebaut - bei einem WordPress-Update kommen neue
+# Core-Dateien dazu, die sonst still mitversioniert wuerden.
+#
+# Draussen bleiben damit automatisch:
+#   - WordPress-Core (wp-admin, wp-includes, ~3.300 Dateien)
+#   - wp-config.php (Datenbank-Zugang und Sicherheitsschluessel!)
+#   - wp-content/uploads (Bilder gehoeren in die Mediathek, nicht ins Repo)
+#   - Fremd-Plugins wie ACF (ueber wordpress.org neu installierbar)
+#   - LocalWP-Eigenes: logs/, conf/
+
+/*
+!/.gitignore
+!/CLAUDE.md
+!/reference/
+!/app/
+
+/app/*
+!/app/public/
+
+/app/public/*
+!/app/public/wp-content/
+
+/app/public/wp-content/*
+!/app/public/wp-content/themes/
+!/app/public/wp-content/plugins/
+
+/app/public/wp-content/themes/*
+!/app/public/wp-content/themes/oldenhaus-restaurant/
+
+/app/public/wp-content/plugins/*
+!/app/public/wp-content/plugins/restaurant-basis/
+
+# Sicherheitsnetz: nie versionieren, egal wo es auftaucht.
+wp-config.php
+*.sql
+*.sql.gz
+.env
+.DS_Store
