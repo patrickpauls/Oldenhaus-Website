@@ -1,0 +1,1069 @@
+/*
+Theme Name:  Oldenhaus Restaurant
+Description: Massgeschneidertes Theme für das Oldenhaus – Restaurant und Pizzeria in Oldenswort. Klassisches Theme ohne Page-Builder. Farben, Schriften und Komponenten stammen aus dem freigegebenen Moodboard; Speisekarte, Fragen & Antworten sowie Kontaktdaten liegen im Plugin „Restaurant-Basis".
+Version:     1.0.0
+Author:      Patrick Pauls
+License:     GNU General Public License v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: oldenhaus
+Requires at least: 6.0
+Tested up to: 7.1
+Requires PHP: 8.0
+*/
+
+/* ==========================================================================
+   Inhalt
+
+   1 · Design-Tokens
+   2 · Schriften
+   3 · Grundlagen
+   4 · Layout
+   5 · Buttons
+   6 · Kopfzeile und Navigation
+   7 · Hero mit Slideshow
+   8 · Abschnitte der Startseite
+   9 · Speisekarte
+  10 · Galerie und Lightbox
+  11 · Über uns und einfache Seiten
+  12 · Fusszeile
+  13 · Platzhalter und Hinweise
+  14 · Bewegung reduzieren
+
+   Aufbau: mobile first. Die Grundregeln gelten für schmale Schirme, die
+   Medienabfragen (min-width) erweitern nach oben. Das Moodboard arbeitet
+   andersherum mit max-width; das Ergebnis ist dasselbe, aber so muss ein
+   Telefon keine Desktop-Regeln erst wieder zurücknehmen.
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1 · Design-Tokens
+   Unverändert aus moodboard-oldenhaus.html übernommen.
+   ========================================================================== */
+
+:root {
+  /* Farben – Verhältnis 60 / 30 / 10 */
+  --c-cream: #F5EEE2;        /* Primär 60 % – Hintergrund */
+  --c-walnut: #3A2A20;       /* Sekundär 30 % – Kopfzeile gescrollt, Fusszeile, dunkle Bänder */
+  --c-tomato: #B0432A;       /* Akzent 10 % – Anrufen, Links */
+
+  /* Ergänzende Töne */
+  --c-ink: #2B1F18;
+  --c-ink-muted: #6B5646;
+  --c-wood: #E9DCC6;
+  --c-olive: #5C6632;
+  --c-tomato-dark: #9E3B24;
+  --c-apricot: #E8B48E;
+  --c-overlay: rgba(43, 31, 24, .46);
+
+  /* Farbe der Punktlinie zwischen Gericht und Preis. Stammt aus dem Moodboard,
+     dort direkt notiert; hier als Token, damit sie nicht zweimal im Code steht. */
+  --c-punkte: #CDB99C;
+
+  /* Schrift */
+  --f-head: "Alegreya Sans", "Trebuchet MS", sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", sans-serif;
+  --fs-h1: clamp(2.6rem, 5.2vw, 4.4rem);
+  --fs-h2: clamp(2rem, 3.4vw, 2.75rem);
+  --fs-h3: 1.375rem;
+  --fs-body: 1.125rem;
+  --fs-small: 1rem;
+  --lh-body: 1.6;
+
+  /* Form – bewusst nicht überall derselbe Radius */
+  --r-img: 18px;
+  --r-btn: 8px;
+  --r-card: 12px;
+  --container: 1120px;
+
+  /* Abstände */
+  --gutter: 20px;
+  --abschnitt: 56px;
+  --kopfhoehe: 68px;
+}
+
+@media (min-width: 560px) {
+  :root {
+    --gutter: 24px;
+    --kopfhoehe: 76px;
+  }
+}
+
+@media (min-width: 820px) {
+  :root {
+    --abschnitt: 72px;
+  }
+}
+
+
+/* ==========================================================================
+   2 · Schriften
+   Lokal ausgeliefert. Es geht keine Anfrage an einen externen Font-Server –
+   das ist einer der Gründe, warum die Website ohne Einwilligungsbanner auskommt.
+   Beide Familien stehen unter der SIL Open Font License 1.1, siehe assets/fonts/.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Alegreya Sans";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("assets/fonts/alegreya-sans-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Alegreya Sans";
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  src: url("assets/fonts/alegreya-sans-800.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("assets/fonts/source-sans-3-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url("assets/fonts/source-sans-3-600.woff2") format("woff2");
+}
+
+
+/* ==========================================================================
+   3 · Grundlagen
+   ========================================================================== */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+body,
+h1, h2, h3, h4,
+p, figure, blockquote,
+dl, dd, ul, ol { margin: 0; padding: 0; }
+
+ul[class],
+ol[class] { list-style: none; }
+
+html {
+  /* Sprungmarken landen nicht unter der festen Kopfzeile. */
+  scroll-padding-top: calc(var(--kopfhoehe) + 16px);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--c-cream);
+  color: var(--c-ink);
+  font-family: var(--f-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  /* Lange Wörter wie "Öffnungszeiten" dürfen auf schmalen Schirmen umbrechen,
+     statt die Seite seitlich hinauszuschieben. */
+  overflow-wrap: break-word;
+}
+
+h1, h2, h3 {
+  font-family: var(--f-head);
+  font-weight: 800;
+  color: var(--c-walnut);
+  line-height: 1.1;
+}
+
+h1 { font-size: var(--fs-h1); line-height: 1.02; }
+h2 { font-size: var(--fs-h2); }
+h3 { font-size: var(--fs-h3); font-weight: 700; }
+
+p { max-width: 62ch; }
+
+a { color: var(--c-tomato); }
+a:hover { color: var(--c-tomato-dark); }
+
+/* Ein einheitlicher, gut sichtbarer Fokusrahmen – Vorgabe aus dem Moodboard. */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--c-apricot);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Nur für Screenreader – etwa die Beschriftung des Menü-Knopfes. */
+.nur-sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Sprungmarke für Tastaturnutzer. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  z-index: 100;
+  background: var(--c-walnut);
+  color: var(--c-cream);
+  padding: 12px 18px;
+  border-radius: var(--r-btn);
+}
+.skip-link:focus {
+  left: var(--gutter);
+  top: 12px;
+}
+
+
+/* ==========================================================================
+   4 · Layout
+   ========================================================================== */
+
+.wrap {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  /* Seitenabstand links und rechts gleich – Kritikpunkt aus der Abstimmung. */
+  padding-inline: var(--gutter);
+}
+
+.abschnitt { padding-block: var(--abschnitt); }
+
+/* Abwechselnd helle und abgesetzte Flächen, damit die Seite Rhythmus bekommt. */
+.abschnitt--holz { background: var(--c-wood); }
+
+.abschnitt--dunkel {
+  background: var(--c-walnut);
+  color: var(--c-cream);
+}
+.abschnitt--dunkel h2,
+.abschnitt--dunkel h3 { color: var(--c-cream); }
+.abschnitt--dunkel p { color: var(--c-wood); }
+.abschnitt--dunkel a { color: var(--c-apricot); }
+
+.abschnitt__kopf { margin-bottom: 28px; }
+.abschnitt__kopf p { margin-top: 12px; }
+
+/* Text-Bild-Block. Einspaltig gestapelt, ab 820 px nebeneinander. */
+.duo {
+  display: grid;
+  gap: 28px;
+  align-items: center;
+}
+
+@media (min-width: 820px) {
+  .duo {
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+  }
+  .duo--schmales-bild { grid-template-columns: .9fr 1.1fr; }
+  .duo--breiter-text { grid-template-columns: 1fr 1.1fr; }
+
+  /* Jeder zweite Block dreht die Reihenfolge – Bilder stehen dann nicht
+     stur untereinander in derselben Spalte. */
+  .duo--gedreht .duo__bild { order: 2; }
+}
+
+
+/* ==========================================================================
+   5 · Buttons
+   ========================================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--c-tomato);
+  color: var(--c-cream);
+  font-family: var(--f-body);
+  font-weight: 600;
+  font-size: 1.05rem;
+  line-height: 1.2;
+  text-decoration: none;
+  padding: 13px 22px;
+  /* Mindestens 44 px hoch – sichere Trefferfläche am Telefon. */
+  min-height: 44px;
+  border-radius: var(--r-btn);
+  border: 2px solid transparent;
+  transition: background-color .2s ease;
+}
+
+.btn:hover,
+.btn:focus-visible {
+  background: var(--c-tomato-dark);
+  color: var(--c-cream);
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+/*
+  Zustand ohne hinterlegte Telefonnummer.
+
+  Bewusst kein Link: Ein Button, der ins Leere führt, ist für Gäste schlechter
+  als ein ehrlicher Hinweis. `color: inherit` sorgt dafür, dass er sowohl auf
+  hellem als auch auf dunklem Grund lesbar bleibt.
+*/
+.btn--ohne-nummer {
+  background: transparent;
+  border: 2px dashed currentColor;
+  color: inherit;
+  opacity: .8;
+  cursor: default;
+  font-weight: 400;
+}
+
+
+/* ==========================================================================
+   6 · Kopfzeile und Navigation
+   ========================================================================== */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: var(--kopfhoehe);
+  display: flex;
+  align-items: center;
+  transition: background-color .35s ease;
+}
+
+/*
+  Auf der Startseite liegt die Kopfzeile über dem Hero. Der negative Aussenabstand
+  zieht den Hero unter sie, sodass sie durchsichtig darüber schwebt.
+*/
+.site-header--ueber-hero { margin-bottom: calc(var(--kopfhoehe) * -1); }
+
+/* Gescrollt – und auf Unterseiten von Anfang an. */
+.site-header--fest,
+.site-header.is-solid { background: var(--c-walnut); }
+
+.site-header .wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wortmarke {
+  font-family: var(--f-head);
+  font-weight: 800;
+  font-size: 1.45rem;
+  color: var(--c-cream);
+  text-decoration: none;
+  line-height: 1;
+  letter-spacing: .005em;
+  margin-right: auto;
+}
+.wortmarke:hover { color: var(--c-cream); }
+
+.wortmarke small {
+  display: block;
+  font-family: var(--f-body);
+  font-weight: 400;
+  font-size: .75rem;
+  letter-spacing: .02em;
+  opacity: .85;
+  margin-top: 3px;
+}
+
+.wortmarke--logo img {
+  max-height: 48px;
+  width: auto;
+}
+
+@media (min-width: 560px) {
+  .wortmarke { font-size: 1.7rem; }
+  .wortmarke small { font-size: .8rem; }
+}
+
+/* --- Anruf-Button in der Kopfzeile ------------------------------------- */
+
+.header-call {
+  padding: 9px 14px;
+  font-size: 1rem;
+  min-height: 44px;
+}
+
+/*
+  Am Telefon ist der Anruf-Button immer sichtbar – so verlangt es die Spec.
+  Nur am Desktop auf der Startseite fährt er beim Scrollen ein, damit er den
+  durchsichtigen Hero nicht stört.
+*/
+@media (min-width: 820px) {
+  .site-header--ueber-hero .header-call {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .3s ease, visibility .3s ease;
+  }
+  .site-header--ueber-hero.show-call .header-call {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+/* Auf sehr schmalen Schirmen bleibt nur das Hörersymbol. */
+@media (max-width: 400px) {
+  .header-call span { display: none; }
+  .header-call { padding: 9px 12px; }
+}
+
+/* --- Menüknopf (nur mobil) --------------------------------------------- */
+
+.menue-knopf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: var(--c-cream);
+  cursor: pointer;
+}
+
+.menue-knopf__balken,
+.menue-knopf__balken::before,
+.menue-knopf__balken::after {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: currentColor;
+  transition: transform .2s ease, opacity .2s ease;
+}
+
+.menue-knopf__balken { position: relative; }
+
+.menue-knopf__balken::before,
+.menue-knopf__balken::after {
+  content: "";
+  position: absolute;
+  left: 0;
+}
+.menue-knopf__balken::before { top: -7px; }
+.menue-knopf__balken::after { top: 7px; }
+
+/* Geöffnet: aus den drei Balken wird ein Kreuz. */
+.menue-knopf[aria-expanded="true"] .menue-knopf__balken { background: transparent; }
+.menue-knopf[aria-expanded="true"] .menue-knopf__balken::before { transform: translateY(7px) rotate(45deg); }
+.menue-knopf[aria-expanded="true"] .menue-knopf__balken::after { transform: translateY(-7px) rotate(-45deg); }
+
+/* --- Navigation --------------------------------------------------------- */
+
+.hauptnav {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--c-walnut);
+  padding: 8px var(--gutter) 20px;
+}
+
+.hauptnav[hidden] { display: none; }
+
+.hauptnav ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hauptnav a {
+  display: block;
+  color: var(--c-cream);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  /* Grosszügige Trefferfläche für Daumen. */
+  padding: 12px 4px;
+}
+
+.hauptnav a:hover,
+.hauptnav a:focus-visible { color: var(--c-apricot); }
+
+/* Aktuelle Seite kenntlich machen. */
+.hauptnav .current-menu-item > a,
+.hauptnav .current_page_item > a { color: var(--c-apricot); }
+
+@media (min-width: 820px) {
+  /* Ab hier steht die Navigation waagerecht in der Kopfzeile. */
+  .menue-knopf { display: none; }
+
+  .hauptnav {
+    position: static;
+    background: transparent;
+    padding: 0;
+    margin-left: auto;
+    margin-right: 8px;
+  }
+
+  /* Am Desktop ist die Navigation immer sichtbar, auch wenn das
+     hidden-Attribut fürs Telefon gesetzt ist. */
+  .hauptnav[hidden] { display: block; }
+
+  .hauptnav ul {
+    flex-direction: row;
+    gap: 26px;
+  }
+
+  .hauptnav a {
+    padding: 4px 0;
+    font-size: 1.02rem;
+  }
+}
+
+
+/* ==========================================================================
+   7 · Hero mit Slideshow
+   ========================================================================== */
+
+.hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  /*
+    svh statt vh: Auf dem Telefon ändert sich vh, sobald die Adressleiste
+    ein- oder ausblendet – der Hero würde beim Scrollen springen.
+  */
+  min-height: 520px;
+  height: 80svh;
+  max-height: 640px;
+  overflow: hidden;
+  color: var(--c-cream);
+  isolation: isolate;
+}
+
+@media (min-width: 820px) {
+  .hero {
+    height: 72svh;
+    max-height: 600px;
+  }
+}
+
+.hero__bilder {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: var(--c-walnut);
+}
+
+.hero__bild {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+
+.hero__bild.is-active { opacity: 1; }
+
+.hero__bild img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Abdunklung, damit der Text über jedem Foto lesbar bleibt. */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--c-overlay);
+}
+
+.hero__inhalt {
+  width: 100%;
+  padding-bottom: 44px;
+  padding-top: 100px;
+}
+
+.hero h1 { color: var(--c-cream); max-width: 16ch; }
+
+.hero__unterzeile {
+  margin-top: 14px;
+  font-size: 1.15rem;
+  max-width: 40ch;
+  color: var(--c-cream);
+}
+
+.hero__aktionen {
+  margin-top: 26px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.heute {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.heute em {
+  font-style: normal;
+  color: var(--c-apricot);
+}
+
+@media (min-width: 560px) {
+  .hero__inhalt { padding-bottom: 52px; }
+  .hero__unterzeile { font-size: 1.2rem; }
+}
+
+
+/* ==========================================================================
+   8 · Abschnitte der Startseite
+   ========================================================================== */
+
+/* --- Öffnungszeiten ----------------------------------------------------- */
+
+.zeiten {
+  font-size: 1.05rem;
+  max-width: 26rem;
+}
+
+.zeiten li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1.5rem;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(245, 238, 226, .16);
+}
+
+.zeiten li:last-child { border-bottom: 0; }
+
+.zeiten .tag { font-weight: 600; }
+.zeiten .zeit { text-align: right; }
+.zeiten .ruhetag { color: var(--c-apricot); }
+
+/* Der heutige Tag wird hervorgehoben – das ist die häufigste Frage. */
+.zeiten li[data-heute="ja"] .tag,
+.zeiten li[data-heute="ja"] .zeit { color: var(--c-apricot); }
+
+@media (min-width: 560px) {
+  .zeiten { font-size: 1.1rem; }
+}
+
+/* Sonderöffnungszeiten erscheinen nur, wenn welche eingetragen sind. */
+.sonderzeiten {
+  margin-top: 24px;
+  padding: 18px 20px;
+  border: 1px solid var(--c-apricot);
+  border-radius: var(--r-card);
+}
+
+.sonderzeiten h3 {
+  color: var(--c-apricot);
+  font-size: 1.15rem;
+  margin-bottom: 6px;
+}
+
+.sonderzeiten ul { list-style: none; }
+.sonderzeiten li { padding: 2px 0; }
+
+.anschrift { margin-top: 28px; }
+.anschrift p { margin-top: 8px; }
+
+/* --- Fragen und Antworten ----------------------------------------------- */
+
+/*
+  Natives details/summary: aufklappbar ohne eine Zeile JavaScript und ohne
+  Animation – genau das ruhige Verhalten, das die Spec verlangt.
+*/
+.faq { max-width: 760px; }
+
+.faq details {
+  border-bottom: 1px solid var(--c-wood);
+}
+
+.faq summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0;
+  cursor: pointer;
+  font-family: var(--f-head);
+  font-weight: 700;
+  font-size: var(--fs-h3);
+  color: var(--c-walnut);
+  list-style: none;
+}
+
+/* Das Standard-Dreieck der Browser entfernen, eigenes Zeichen setzen. */
+.faq summary::-webkit-details-marker { display: none; }
+
+.faq summary::after {
+  content: "+";
+  font-weight: 400;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--c-tomato);
+  flex: none;
+}
+
+.faq details[open] summary::after { content: "–"; }
+
+.faq summary:hover { color: var(--c-tomato); }
+
+.faq__antwort {
+  padding-bottom: 20px;
+  color: var(--c-ink-muted);
+}
+
+.faq__antwort p + p { margin-top: 10px; }
+
+
+/* ==========================================================================
+   9 · Speisekarte
+   ========================================================================== */
+
+.karte { max-width: 760px; margin-inline: auto; }
+
+.karte__einleitung { margin-top: 12px; }
+
+.karte__kategorie { margin-top: 48px; }
+.karte__kategorie:first-of-type { margin-top: 32px; }
+
+.karte__kategorie h2 { line-height: 1.1; }
+
+.karte__kategorie-einleitung {
+  color: var(--c-ink-muted);
+  margin-top: 4px;
+}
+
+.gerichte { margin-top: 22px; }
+
+.gericht {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--c-wood);
+}
+
+.gericht__kopf {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.gericht__name {
+  font-family: var(--f-head);
+  font-weight: 700;
+  font-size: var(--fs-h3);
+  color: var(--c-ink);
+}
+
+/*
+  Die gepunktete Linie zwischen Name und Preis. Auf schmalen Schirmen bleibt
+  dafür kein Platz – dort verschwindet sie, und der Preis rückt direkt an den
+  Namen heran (siehe Medienabfrage unten).
+*/
+.gericht__linie {
+  flex: 1;
+  border-bottom: 2px dotted var(--c-punkte);
+  transform: translateY(-5px);
+  min-width: 12px;
+}
+
+.gericht__preis {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--c-walnut);
+  white-space: nowrap;
+}
+
+.gericht__beschreibung {
+  color: var(--c-ink-muted);
+  margin-top: 2px;
+  max-width: 56ch;
+}
+
+.kennzeichen {
+  display: inline-block;
+  font-family: var(--f-body);
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--c-olive);
+  border: 1.5px solid var(--c-olive);
+  border-radius: 4px;
+  padding: 0 6px;
+  margin-left: 6px;
+  transform: translateY(-2px);
+  white-space: nowrap;
+}
+
+.karte__legende {
+  margin-top: 28px;
+  font-size: var(--fs-small);
+  color: var(--c-ink-muted);
+  border-top: 1px solid var(--c-wood);
+  padding-top: 14px;
+}
+
+.karte__legende .kennzeichen { margin: 0 6px 0 0; }
+
+@media (max-width: 479px) {
+  /* Punktlinie weg, Name darf umbrechen, Preis bleibt rechts aussen. */
+  .gericht__linie { display: none; }
+
+  .gericht__kopf {
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .gericht__name { flex: 1; }
+}
+
+
+/* ==========================================================================
+  10 · Galerie und Lightbox
+   ========================================================================== */
+
+/*
+  Der Kunde pflegt die Bilder über den normalen Galerie-Dialog von WordPress.
+  Dessen Standard-Auszeichnung bekommt hier eine Mauerwerk-Optik: unterschiedlich
+  hohe Bilder nebeneinander, statt eines starren Rasters.
+*/
+.galerie .gallery {
+  columns: 1;
+  column-gap: 20px;
+  margin: 0;
+  display: block;
+}
+
+.galerie .gallery-item {
+  break-inside: avoid;
+  margin: 0 0 20px;
+  width: 100% !important;
+  float: none !important;
+  display: block;
+}
+
+.galerie .gallery-icon img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--r-img);
+  border: 0 !important;
+}
+
+.galerie .gallery-caption {
+  font-size: var(--fs-small);
+  color: var(--c-ink-muted);
+  margin-top: 8px;
+  padding: 0 2px;
+}
+
+.galerie .gallery-item a { display: block; }
+
+@media (min-width: 560px) {
+  .galerie .gallery { columns: 2; }
+}
+
+@media (min-width: 900px) {
+  .galerie .gallery { columns: 3; }
+}
+
+/* --- Lightbox ----------------------------------------------------------- */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gutter);
+  background: rgba(43, 31, 24, .92);
+}
+
+.lightbox[hidden] { display: none; }
+
+.lightbox img {
+  max-width: 100%;
+  max-height: 82svh;
+  width: auto;
+  border-radius: var(--r-img);
+}
+
+.lightbox__bild {
+  text-align: center;
+}
+
+.lightbox__text {
+  color: var(--c-cream);
+  font-size: var(--fs-small);
+  margin-top: 12px;
+  max-width: 60ch;
+}
+
+.lightbox__schliessen {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 48px;
+  height: 48px;
+  font-size: 1.75rem;
+  line-height: 1;
+  background: transparent;
+  border: 0;
+  color: var(--c-cream);
+  cursor: pointer;
+}
+
+
+/* ==========================================================================
+  11 · Über uns und einfache Seiten
+   ========================================================================== */
+
+.seitenkopf {
+  padding-top: calc(var(--abschnitt) - 12px);
+  padding-bottom: 8px;
+}
+
+.seitenkopf p { margin-top: 12px; }
+
+.block + .block { margin-top: var(--abschnitt); }
+
+/* Impressum, Datenschutz und alles, was aus dem Editor kommt. */
+.textseite { max-width: 70ch; }
+.textseite h2 { font-size: 1.75rem; margin-top: 32px; }
+.textseite h3 { margin-top: 24px; }
+.textseite p,
+.textseite ul,
+.textseite ol { margin-top: 14px; }
+.textseite ul,
+.textseite ol { padding-left: 1.3em; }
+.textseite li { margin-top: 6px; }
+
+
+/* ==========================================================================
+  12 · Fusszeile
+   ========================================================================== */
+
+.site-footer {
+  background: var(--c-walnut);
+  color: var(--c-cream);
+  padding-block: var(--abschnitt) 28px;
+  margin-top: var(--abschnitt);
+}
+
+.site-footer h2 {
+  color: var(--c-cream);
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+
+.site-footer a { color: var(--c-apricot); }
+
+.site-footer__spalten {
+  display: grid;
+  gap: 32px;
+}
+
+@media (min-width: 700px) {
+  .site-footer__spalten { grid-template-columns: repeat(3, 1fr); }
+}
+
+.site-footer .zeiten { font-size: 1rem; max-width: none; }
+
+.site-footer__unten {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(245, 238, 226, .18);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-small);
+}
+
+.site-footer__unten ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.site-footer__unten a { text-decoration: none; }
+.site-footer__unten a:hover { text-decoration: underline; }
+
+
+/* ==========================================================================
+  13 · Platzhalter und Hinweise
+   ========================================================================== */
+
+.foto img { border-radius: var(--r-img); }
+
+/*
+  Platzhalterfläche aus dem Moodboard. Sie greift automatisch, sobald kein Bild
+  gesetzt ist – so fällt das Layout nicht zusammen, und im Backend ist sofort
+  sichtbar, wo noch ein Foto fehlt.
+*/
+.ph {
+  background: var(--c-wood);
+  border-radius: var(--r-img);
+  display: flex;
+  align-items: flex-end;
+  padding: 14px;
+  color: var(--c-ink-muted);
+  font-size: .9rem;
+  aspect-ratio: 4 / 3;
+}
+
+.ph--hochkant { aspect-ratio: 4 / 5; }
+
+/*
+  Fehlender Text wird sichtbar als solcher markiert – bewusst kein Blindtext,
+  damit nichts versehentlich mit veröffentlicht wird.
+*/
+.fehlt {
+  color: var(--c-ink-muted);
+  font-style: italic;
+}
+
+.fehlt::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c-tomato);
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+
+/* ==========================================================================
+  14 · Bewegung reduzieren
+   Wer im Betriebssystem weniger Bewegung eingestellt hat, bekommt keine.
+   Die Slideshow steht dann still – das Skript startet sie gar nicht erst.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

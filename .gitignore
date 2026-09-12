@@ -15,6 +15,7 @@
 !/.gitignore
 !/CLAUDE.md
 !/reference/
+!/tools/
 !/app/
 
 /app/*
