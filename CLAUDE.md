@@ -111,6 +111,7 @@ oEmbed-Erkennung. Wird bei jeder Abnahme neu geprueft, siehe „Pruefungen".
 - [x] Theme-Geruest, Design-Tokens, alle Seitenvorlagen
 - [x] Reaktivitaet (mobile first, 2 gezielte max-width-Ausnahmen)
 - [x] Seiten, Menues, Beispielinhalte (`tools/*.php`)
+- [x] Echte Speisekarte des Kunden eingepflegt (`tools/speisekarte-anlegen.php`)
 - [x] Texte als freigabepflichtige Entwuerfe
 - [x] Bilder: 15 Uebergangsbilder aus der WordPress-Fotodatenbank (CC0)
 - [x] Haertung inkl. XML-RPC-Sperre und Login-Begrenzung
@@ -181,13 +182,15 @@ auf jeder Seite (Startseite jetzt 14,9 statt 24,4 KB).
 | 2 | E-Mail-Adresse | fuers Impressum erforderlich |
 | 3 | Impressum-Inhalte | rechtlich erforderlich |
 | 4 | Datenschutzerklaerung | rechtlich erforderlich |
-| 5 | Speisekarten-Inhalte | Kunde liefert Foto/Scan |
+| 5 | Allergenkennzeichnung | liegt vor, aber ohne lesbare Darstellung bewusst weggelassen |
 | 6 | FAQ-Antworten 1–4 | liegen als Entwurf bereit, Sachaussage unbestaetigt |
 | 7 | Events-Praesentation | Widerspruch im Fragebogen (A2 ja / B7 nein) |
 | 8 | Logo | bis dahin Wortmarke |
 | 9 | Fotos | Stockfotos als Uebergang |
 | 10 | Business-Lunch | Mo–Do erst ab 17 Uhr, Textfrage |
 | 11 | Uploads-Schutz | auf dem Zielserver einrichten (lokal nicht testbar) |
+| 12 | Getraenkekarte | liegt nicht vor; Kategorie „Getraenke“ steht leer bereit |
+| 13 | Vegetarisch/vegan | in der gelieferten Karte nicht angegeben, Haekchen daher ungesetzt |
 
 **Grundsatz bei fehlenden Inhalten:** kein Lorem Ipsum. Fehlt eine Sachaussage – etwa ob
 Hunde erlaubt sind – wird sie nicht erfunden, sondern der Eintrag bleibt Entwurf und

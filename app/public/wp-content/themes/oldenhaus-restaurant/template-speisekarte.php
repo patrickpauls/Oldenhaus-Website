@@ -27,6 +27,10 @@ $oldenhaus_legende    = oldenhaus_feld( 'legende', null, 'kennzeichnen fleischlo
 $oldenhaus_kategorien = function_exists( 'restaurant_basis_kategorien' )
 	? restaurant_basis_kategorien()
 	: array();
+
+// Die Legende unten erklaert die Auszeichnungen „vegetarisch" und „vegan".
+// Solange kein Gericht eine traegt, erklaert sie nichts und bleibt weg.
+$oldenhaus_hat_kennzeichnung = false;
 ?>
 <div class="wrap">
 	<div class="karte">
@@ -70,6 +74,10 @@ $oldenhaus_kategorien = function_exists( 'restaurant_basis_kategorien' )
 							$oldenhaus_preis         = restaurant_basis_gericht_preis( $oldenhaus_gericht->ID );
 							$oldenhaus_beschreibung  = restaurant_basis_gericht_beschreibung( $oldenhaus_gericht->ID );
 							$oldenhaus_kennzeichnung = restaurant_basis_gericht_kennzeichnung( $oldenhaus_gericht->ID );
+
+							if ( '' !== $oldenhaus_kennzeichnung ) {
+								$oldenhaus_hat_kennzeichnung = true;
+							}
 							?>
 							<li class="gericht">
 								<div class="gericht__kopf">
@@ -101,11 +109,13 @@ $oldenhaus_kategorien = function_exists( 'restaurant_basis_kategorien' )
 				</section>
 			<?php endforeach; ?>
 
-			<p class="karte__legende">
-				<span class="kennzeichen">vegetarisch</span>
-				<span class="kennzeichen">vegan</span>
-				<?php echo esc_html( $oldenhaus_legende ); ?>
-			</p>
+			<?php if ( $oldenhaus_hat_kennzeichnung ) : ?>
+				<p class="karte__legende">
+					<span class="kennzeichen">vegetarisch</span>
+					<span class="kennzeichen">vegan</span>
+					<?php echo esc_html( $oldenhaus_legende ); ?>
+				</p>
+			<?php endif; ?>
 
 		<?php endif; ?>
 
