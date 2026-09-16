@@ -106,6 +106,21 @@ function oldenhaus_oembed_aufraeumen(): void {
 	remove_action( 'wp_head', 'wp_oembed_add_host_js' );
 
 	/*
+	 * Auch die oEmbed-Schnittstelle selbst schliessen.
+	 *
+	 * Gefunden beim Nachpruefen: /wp-json/oembed/1.0/embed?url=... lieferte
+	 * 'author_name' und 'author_url' aus - also genau den Anmeldenamen, den
+	 * ?author=1 und /wp-json/wp/v2/users weiter unten muehsam verbergen. Die
+	 * Umleitung des Autorenarchivs half nicht: Der Name stand im JSON, bevor
+	 * ueberhaupt eine Adresse aufgerufen werden musste.
+	 *
+	 * Die Route wird deshalb gar nicht erst angemeldet. Moeglich ist das nur,
+	 * weil diese Website nirgends eingebettet werden soll - die
+	 * Erkennungsverweise oben sind aus demselben Grund schon entfernt.
+	 */
+	remove_action( 'rest_api_init', 'wp_oembed_register_route' );
+
+	/*
 	 * Auch das automatische Einbetten abschalten.
 	 *
 	 * Fügt jemand später eine YouTube- oder Maps-Adresse in einen Text ein, baut
@@ -122,6 +137,26 @@ function oldenhaus_oembed_aufraeumen(): void {
 	}
 }
 add_action( 'init', 'oldenhaus_oembed_aufraeumen' );
+
+/**
+ * Streicht den Autorennamen aus einer oEmbed-Antwort.
+ *
+ * Zweites Netz zur Route oben: Meldet ein spaeteres Plugin die Schnittstelle
+ * wieder an, steht der Anmeldename trotzdem nicht mehr darin.
+ *
+ * @param array<string, mixed> $daten Die Antwort.
+ * @return array<string, mixed>
+ */
+function oldenhaus_oembed_autor_entfernen( $daten ) {
+	if ( ! is_array( $daten ) ) {
+		return $daten;
+	}
+
+	unset( $daten['author_name'], $daten['author_url'] );
+
+	return $daten;
+}
+add_filter( 'oembed_response_data', 'oldenhaus_oembed_autor_entfernen', 99 );
 
 /* =========================================================================
  * 2 · Weniger Angriffsfläche
@@ -546,3 +581,113 @@ add_action( 'send_headers', 'oldenhaus_sicherheits_header' );
  * entgegennimmt und die am haeufigsten angegriffen wird.
  */
 add_action( 'login_init', 'oldenhaus_sicherheits_header' );
+
+/* =========================================================================
+ * 5 · Fehlersuchmodus
+ * ====================================================================== */
+
+/**
+ * Wohin WordPress das Fehlerprotokoll schreibt - oder '', wenn es aus ist.
+ *
+ * WP_DEBUG_LOG kennt drei Zustaende: aus (false), ein mit Standardpfad (true,
+ * dann wp-content/debug.log) oder ein mit eigenem Pfad (ein String). Nur der
+ * mittlere Fall ist der gefaehrliche - er legt die Datei mitten in den
+ * oeffentlichen Webordner.
+ */
+function oldenhaus_fehlerprotokoll_pfad(): string {
+	if ( ! defined( 'WP_DEBUG_LOG' ) || ! WP_DEBUG_LOG ) {
+		return '';
+	}
+
+	if ( is_string( WP_DEBUG_LOG ) ) {
+		return wp_normalize_path( WP_DEBUG_LOG );
+	}
+
+	return wp_normalize_path( WP_CONTENT_DIR . '/debug.log' );
+}
+
+/**
+ * Ob ein Pfad innerhalb des oeffentlichen Webordners liegt.
+ *
+ * Alles unterhalb von ABSPATH ist ueber eine Adresse abrufbar, sofern der
+ * Webserver es nicht ausdruecklich sperrt. Genau das ist die Schwachstelle:
+ * Ein Fehlerprotokoll nennt vollstaendige Serverpfade, Dateinamen und
+ * Zeilennummern - eine Landkarte der Installation.
+ */
+function oldenhaus_pfad_im_webordner( string $pfad ): bool {
+	if ( '' === $pfad ) {
+		return false;
+	}
+
+	return str_starts_with( $pfad, wp_normalize_path( ABSPATH ) );
+}
+
+/**
+ * Sammelt die Beanstandungen rund um den Fehlersuchmodus.
+ *
+ * @return array<int, string>
+ */
+function oldenhaus_fehlersuche_beanstandungen(): array {
+	$beanstandungen = array();
+	$umgebung       = wp_get_environment_type();
+	$livebetrieb    = ! in_array( $umgebung, array( 'local', 'development' ), true );
+
+	$protokoll = oldenhaus_fehlerprotokoll_pfad();
+
+	if ( oldenhaus_pfad_im_webordner( $protokoll ) ) {
+		$beanstandungen[] = sprintf(
+			'Das Fehlerprotokoll liegt im oeffentlichen Webordner (<code>%s</code>) und ist damit ueber die Adresse abrufbar. Es nennt vollstaendige Serverpfade. In der <code>wp-config.php</code> gehoert <code>WP_DEBUG_LOG</code> auf einen Pfad ausserhalb des Webordners.',
+			esc_html( str_replace( wp_normalize_path( ABSPATH ), '', $protokoll ) )
+		);
+	}
+
+	if ( $livebetrieb && defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+		$beanstandungen[] = 'Der Fehlersuchmodus (<code>WP_DEBUG</code>) ist im Livebetrieb eingeschaltet.';
+	}
+
+	if ( defined( 'WP_DEBUG_DISPLAY' ) && WP_DEBUG_DISPLAY && $livebetrieb ) {
+		$beanstandungen[] = 'Fehlermeldungen werden im Livebetrieb auf der Seite ausgegeben (<code>WP_DEBUG_DISPLAY</code>). Besucher saehen Serverpfade.';
+	}
+
+	// Unabhaengig von den Einstellungen: Liegt die Datei da, ist sie abrufbar.
+	// Ein Plugin oder eine wiederhergestellte Sicherung kann sie erneut anlegen.
+	$altlast = wp_normalize_path( WP_CONTENT_DIR . '/debug.log' );
+
+	if ( '' === $protokoll && file_exists( $altlast ) ) {
+		$beanstandungen[] = 'In <code>wp-content/</code> liegt noch eine <code>debug.log</code> aus einer frueheren Sitzung. Sie ist abrufbar und sollte geloescht werden.';
+	}
+
+	return $beanstandungen;
+}
+
+/**
+ * Weist im Backend auf einen offenen Fehlersuchmodus hin.
+ *
+ * Bewusst ein Hinweis und keine stille Korrektur: WP_DEBUG_LOG ist eine
+ * Konstante und laesst sich zur Laufzeit nicht mehr aendern - eine Umleitung
+ * des Protokolls waere Flickwerk und wuerde den eigentlichen Fehler in der
+ * wp-config.php verdecken. Der Hinweis ist nur fuer Administratoren sichtbar
+ * und nennt genau die Datei, in der die Einstellung steht.
+ */
+function oldenhaus_fehlersuche_hinweis(): void {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+
+	$beanstandungen = oldenhaus_fehlersuche_beanstandungen();
+
+	if ( array() === $beanstandungen ) {
+		return;
+	}
+
+	echo '<div class="notice notice-error"><p><strong>Sicherheit: Der Fehlersuchmodus gibt Interna preis.</strong></p><ul style="list-style:disc;margin-left:1.5em;">';
+
+	foreach ( $beanstandungen as $beanstandung ) {
+		// wp_kses_post() laesst <code> stehen; die Texte stammen ausschliesslich
+		// von oben, Variablen sind dort bereits escaped.
+		echo '<li>' . wp_kses_post( $beanstandung ) . '</li>';
+	}
+
+	echo '</ul></div>';
+}
+add_action( 'admin_notices', 'oldenhaus_fehlersuche_hinweis' );

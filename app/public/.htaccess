@@ -1,0 +1,43 @@
+
+# Keine Protokoll-, Sicherungs- und Konfigurationsdateien ausliefern.
+#
+# Anlass: WP_DEBUG_LOG schrieb das Fehlerprotokoll nach wp-content/debug.log,
+# also mitten in den oeffentlichen Webordner. Die Datei war ueber die Adresse
+# abrufbar und nannte vollstaendige Serverpfade. Behoben ist das in der
+# wp-config.php - das Protokoll liegt jetzt ausserhalb des Webordners.
+#
+# Diese Regeln sind das zweite Netz: Legt spaeter ein Plugin, ein Hoster-Werkzeug
+# oder eine wiederhergestellte Sicherung erneut eine solche Datei hier ab, ist
+# sie trotzdem nicht abrufbar.
+#
+# ACHTUNG: Wirkt nur auf Apache. LocalWP nutzt nginx - dort greift diese Datei
+# NICHT und laesst sich auch nicht testen. Fuer nginx gehoert in die
+# Server-Konfiguration:
+#
+#   location ~* \.(log|sql|bak|old|orig|swp|save|ini|env)$ { deny all; }
+#   location ~* ^/(readme\.html|license\.txt|wp-config-sample\.php|local-xdebuginfo\.php)$ { deny all; }
+#
+<FilesMatch "(?i:\.(log|sql|sql\.gz|bak|bkp|old|orig|swp|save|tmp|ini|env|dist|yml|lock)|~)$">
+	Require all denied
+</FilesMatch>
+
+# Einzeln benannt, weil diese Dateien nicht auf eine der Endungen oben passen.
+<FilesMatch "^(?i:wp-config\.php|wp-config-sample\.php|readme\.html|license\.txt|local-xdebuginfo\.php|debug\.log|\.htaccess|\.user\.ini)$">
+	Require all denied
+</FilesMatch>
+
+# BEGIN WordPress
+# The directives (lines) between "BEGIN WordPress" and "END WordPress" are
+# dynamically generated, and should only be modified via WordPress filters.
+# Any changes to the directives between these markers will be overwritten.
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+
+# END WordPress

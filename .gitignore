@@ -24,6 +24,11 @@
 /app/public/*
 !/app/public/wp-content/
 
+# Die .htaccess enthaelt keine Zugangsdaten, wohl aber die Sperren fuer
+# Protokoll- und Konfigurationsdateien. Sie muss mit auf den Zielserver -
+# unversioniert waere die Haertung nach dem Umzug wieder weg.
+!/app/public/.htaccess
+
 /app/public/wp-content/*
 !/app/public/wp-content/themes/
 !/app/public/wp-content/plugins/

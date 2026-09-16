@@ -132,6 +132,8 @@ oEmbed-Erkennung. Wird bei jeder Abnahme neu geprueft, siehe „Pruefungen".
 | Login-Sperre | greift ab dem 5. Fehlversuch, Hinweis sichtbar, verraet keine Konten |
 | Gericht „nicht verfuegbar" | verschwindet im Frontend, bleibt im Backend, umkehrbar |
 | Theme-Wechsel | mit Standard-Theme bleiben 12 Gerichte, 5 Fragen, 5 Kategorien und die Kontaktdaten erreichbar |
+| Fehlerprotokoll | liegt ausserhalb des Webordners (`logs/php/wp-fehler.log`), `wp-content/debug.log` liefert 404 |
+| Anmeldename | in Quelltext, Feed, Sitemap, REST und oEmbed nicht mehr auffindbar |
 | Inline-Styles | im Frontend keine. Im Backend neun style-Attribute fuer kleine Farbmarkierungen in Uebersichtslisten - dafuer eine eigene Admin-Stylesheet-Datei anzulegen waere unverhaeltnismaessig. Dazu ein dokumentierter style-Block in header.php fuer den Fall ohne JavaScript. |
 
 ### Unabhaengige Review
@@ -172,6 +174,46 @@ auf jeder Seite (Startseite jetzt 14,9 statt 24,4 KB).
    weiterprobiert. Der Sperrhinweis ist jetzt die einzige Ausnahme von der
    Vereinheitlichung; ueber vorhandene Konten verraet er nichts.
 
+### Zwei Funde aus der Pruefung des Fehlersuchmodus
+
+Anlass war eine Meldung der WordPress-Website-Zustandspruefung zu `WP_DEBUG_LOG`.
+
+1. **Das Fehlerprotokoll lag im oeffentlichen Webordner.** `WP_DEBUG_LOG = true`
+   schreibt nach `wp-content/debug.log` – die Datei wurde mit HTTP 200 ausgeliefert und
+   nannte den vollstaendigen Pfad der Installation samt Dateinamen und Zeilennummern.
+   Drei Aenderungen: Das Protokoll liegt jetzt in `logs/php/wp-fehler.log`, also
+   ausserhalb des Webordners. Der Fehlersuchmodus haengt am `WP_ENVIRONMENT_TYPE` und
+   schaltet sich bei `production` von selbst ab. Und `display_errors` wird schon in der
+   `wp-config.php` abgeschaltet – WordPress selbst fasst die Einstellung bei
+   ausgeschaltetem `WP_DEBUG` gar nicht an, ein Hoster mit `display_errors = On` haette
+   Pfade sonst direkt auf die Seite geschrieben.
+
+   Dazu ein Waechter im Theme (`inc/sicherheit.php`, Abschnitt 5): Liegt das Protokoll
+   im Webordner, laeuft der Fehlersuchmodus im Livebetrieb oder liegt noch eine alte
+   `debug.log` herum, erscheint im Backend ein Hinweis. Bewusst ein Hinweis und keine
+   stille Korrektur – `WP_DEBUG_LOG` ist eine Konstante und laesst sich zur Laufzeit
+   nicht mehr aendern; eine Umleitung wuerde die eigentliche Ursache verdecken.
+
+2. **Die oEmbed-Schnittstelle verriet den Anmeldenamen.** `/wp-json/oembed/1.0/embed`
+   lieferte `author_name` und `author_url` aus – also genau die Information, fuer die
+   `?author=1` umgeleitet und `/wp-json/wp/v2/users` geschlossen worden war. Die
+   Umleitung des Autorenarchivs half nicht, weil der Name schon im JSON stand. Die Route
+   wird jetzt gar nicht erst angemeldet; zusaetzlich streicht ein Filter die beiden
+   Felder, falls sie ein Plugin spaeter wieder anmeldet.
+
+Ohne Befund geprueft: Sitemaps (keine Autoren-Sitemap), Feeds (kein `dc:creator`),
+`/wp-json/wp/v2/users/me` und `/wp/v2/settings` (401), Medien (`author: 0`),
+Verzeichnisauflistung (aus), sowie der eigene Code auf `var_dump`, `print_r`, `phpinfo`
+und `error_log` (keine Treffer). Alle eigenen PHP-Dateien haben einen ABSPATH-Schutz.
+
+**Nicht behoben, weil LocalWP-eigen:** Ein direkter Aufruf von
+`/wp-content/mu-plugins/local-by-flywheel-live-link-helper.php` erzeugt einen
+PHP-Fatal-Error und gibt – wegen `display_errors = On` in der LocalWP-`php.ini` – einen
+vollstaendigen Stacktrace mit Serverpfaden aus. Die Datei gehoert zur
+Entwicklungsumgebung und darf ohnehin nicht mit auf den Zielserver.
+
+---
+
 ---
 
 ## Offene Punkte (blockieren den Livegang)
@@ -206,12 +248,41 @@ manche Dateien zur Entwicklungsumgebung gehoeren.
 | Aufgabe | Warum |
 |---|---|
 | `wp-content/uploads/.htaccess` pruefen | Verhindert PHP-Ausfuehrung im Upload-Ordner. Wirkt nur unter **Apache**. Laeuft der Zielserver mit nginx, gehoert stattdessen in die Server-Konfiguration: `location ~* /wp-content/uploads/.*\.(php\|phar\|phtml)$ { deny all; }` |
-| `DISALLOW_FILE_EDIT` in die `wp-config.php` | Steht aktuell im Theme. Dort greift es nur, solange das Theme geladen wird - in der wp-config gilt es immer |
+| **`WP_ENVIRONMENT_TYPE` auf `production` setzen** | Schaltet in der `wp-config.php` Fehlersuchmodus und Protokoll ab. Ohne das laeuft die Fehlersuche live weiter |
+| Pfad in `WP_DEBUG_LOG` pruefen | Zeigt auf `logs/php/` der LocalWP-Struktur. Auf dem Zielserver existiert der Ordner nicht - dann greift die eingebaute Pruefung und schaltet das Protokoll ab. Soll live protokolliert werden, gehoert ein Pfad **ausserhalb** des Webordners hinein |
+| Protokoll- und Sicherungsdateien sperren | Die Regeln stehen in `app/public/.htaccess` (Apache). Fuer nginx: `location ~* \.(log\|sql\|bak\|old\|orig\|swp\|save\|ini\|env)$ { deny all; }` |
+| ~~`DISALLOW_FILE_EDIT`~~ | Erledigt: steht jetzt in der `wp-config.php` und gilt damit auch, wenn das Theme einmal nicht geladen wird |
 | `/readme.html` und `/license.txt` loeschen | Verraten die WordPress-Version, die sonst aufwendig versteckt wird |
 | `/local-xdebuginfo.php` loeschen | Gehoert zu LocalWP und gibt einen vollstaendigen phpinfo-Dump samt Serverpfaden aus. Darf unter keinen Umstaenden live gehen |
 | Automatische Core-Updates aktiv lassen | Sicherheitsaktualisierungen sollen ohne Zutun ankommen |
 | HTTPS erzwingen und `upgrade-insecure-requests` zur CSP ergaenzen | Lokal bewusst weggelassen, weil die Entwicklungsumgebung ueber http laeuft |
 | Impressum und Datenschutzerklaerung befuellen | Rechtlich zwingend vor der Veroeffentlichung |
+
+### Der Fehlersuche-Block fuer die `wp-config.php`
+
+Die `wp-config.php` ist bewusst **nicht** versioniert – sie enthaelt Datenbankzugang und
+Sicherheitsschluessel. Der folgende Block muss auf dem Zielserver deshalb von Hand
+hinein, sonst faellt die Website dort auf das Standardverhalten zurueck und schreibt das
+Protokoll wieder in den Webordner. Er gehoert **ueber** die Zeile
+`/* That's all, stop editing! */`:
+
+```php
+define( 'WP_ENVIRONMENT_TYPE', 'production' );
+
+define( 'WP_DEBUG',         false );
+define( 'WP_DEBUG_LOG',     false );  // oder ein Pfad AUSSERHALB des Webordners
+define( 'WP_DEBUG_DISPLAY', false );
+define( 'SCRIPT_DEBUG',     false );
+
+// WordPress fasst display_errors bei ausgeschaltetem WP_DEBUG nicht an -
+// ein Hoster mit display_errors = On schriebe Serverpfade auf die Seite.
+ini_set( 'display_errors', '0' );
+ini_set( 'display_startup_errors', '0' );
+
+define( 'DISALLOW_FILE_EDIT', true );
+```
+
+Der Waechter im Theme meldet sich im Backend, falls das vergessen wird.
 
 Nicht behoben, bewusst: `/wp-content/plugins/advanced-custom-fields/readme.txt` nennt
 die ACF-Version. Das liesse sich nur serverseitig sperren und gilt als geringfuegig -
@@ -228,6 +299,24 @@ curl -s http://oldenhaus-restaurant.local | grep -oE 'https?://[a-zA-Z0-9.-]+' \
 
 Erwartung: leer. `w3.org` und `api.w.org` sind XML-Namensraeume, keine Anfragen –
 `s.w.org` dagegen waere ein echter Fund.
+
+**Kein Fehlerprotokoll im Webordner:**
+
+```
+curl -s -o /dev/null -w '%{http_code}\n' http://oldenhaus-restaurant.local/wp-content/debug.log
+```
+
+Erwartung: 404. Ausserdem muss `find app/public -name '*.log'` leer bleiben.
+
+**Anmeldename nirgends auffindbar:**
+
+```
+for p in / /wp-json/ /feed/ '/?embed=true' '/wp-json/oembed/1.0/embed?url=http://oldenhaus-restaurant.local/'; do
+  curl -s "http://oldenhaus-restaurant.local$p" | grep -ic cuhlen
+done
+```
+
+Erwartung: ueberall 0.
 
 **Reaktivitaet:** 360, 390, 414, 768, 1024, 1440 px. Kein horizontales Scrollen.
 
