@@ -270,7 +270,7 @@ Protokoll wieder in den Webordner. Er gehoert **ueber** die Zeile
 define( 'WP_ENVIRONMENT_TYPE', 'production' );
 
 define( 'WP_DEBUG',         false );
-define( 'WP_DEBUG_LOG',     false );  // oder ein Pfad AUSSERHALB des Webordners
+define( 'WP_DEBUG_LOG',     false );
 define( 'WP_DEBUG_DISPLAY', false );
 define( 'SCRIPT_DEBUG',     false );
 
@@ -283,6 +283,42 @@ define( 'DISALLOW_FILE_EDIT', true );
 ```
 
 Der Waechter im Theme meldet sich im Backend, falls das vergessen wird.
+
+**Wird damit nicht mehr protokolliert?** Doch – nur an anderer Stelle. Das ist der
+wichtigste Punkt zum Verstaendnis des Blocks oben, und er ist leicht falsch zu lesen.
+
+Die gesamte Auswertung von `WP_DEBUG_LOG` steht in `wp_debug_mode()` **innerhalb** von
+`if ( WP_DEBUG )` (`wp-includes/load.php`). Ist `WP_DEBUG` aus, ist `WP_DEBUG_LOG`
+wirkungslos – egal welcher Pfad darin steht. WordPress ruft dann schlicht kein
+`ini_set( 'error_log', … )` auf und ueberlaesst die Protokollierung der `php.ini`, wo
+bei praktisch jedem Hoster `log_errors = On` steht.
+
+Nachgestellt und gemessen (mit `WP_ENVIRONMENT_TYPE = 'production'`):
+
+| Ereignis | Besucher sieht | Protokoll |
+|---|---|---|
+| Fatal Error | WordPress-Fehlerseite, HTTP 500, **kein Pfad, kein Stacktrace** | vollstaendig samt Stacktrace im PHP-Protokoll des Servers |
+| `E_USER_WARNING` | nichts | protokolliert |
+| `E_USER_DEPRECATED` | nichts | nicht protokolliert – `error_reporting()` filtert es im Livebetrieb weg |
+| – | – | **nichts** im Webordner |
+
+Ein Absturz ist also weiterhin lueckenlos nachvollziehbar, nur eben im Serverprotokoll
+des Hosters statt in einer oeffentlich abrufbaren Datei. Weggefallen sind ausschliesslich
+die Veralterungshinweise – Entwicklungsrauschen, das im Livebetrieb nichts zu suchen hat.
+
+**Wenn der Hoster kein Protokoll bereitstellt** (selten, kommt bei einfachen
+Webhosting-Paketen aber vor), ist der Weg *nicht*, `WP_DEBUG_LOG` zu setzen, sondern:
+
+```php
+define( 'WP_DEBUG',         true  );   // noetig, sonst greift WP_DEBUG_LOG nicht
+define( 'WP_DEBUG_DISPLAY', false );   // nichts auf die Seite - unverzichtbar
+define( 'WP_DEBUG_LOG', '/pfad/ausserhalb/des/webordners/wp-fehler.log' );
+```
+
+Dabei zwei Dinge beachten: `WP_DEBUG = true` schaltet `error_reporting( E_ALL )` ein, das
+Protokoll fuellt sich also auch mit Veralterungshinweisen und muss im Blick behalten
+werden. Und der Pfad muss zwingend ausserhalb des Webordners liegen – sonst ist genau
+der Fehler zurueck, wegen dem dieser Abschnitt existiert.
 
 Nicht behoben, bewusst: `/wp-content/plugins/advanced-custom-fields/readme.txt` nennt
 die ACF-Version. Das liesse sich nur serverseitig sperren und gilt als geringfuegig -
