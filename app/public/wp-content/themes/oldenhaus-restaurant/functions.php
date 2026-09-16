@@ -25,4 +25,5 @@ require_once OLDENHAUS_PFAD . '/inc/enqueue.php';
 require_once OLDENHAUS_PFAD . '/inc/sicherheit.php';
 require_once OLDENHAUS_PFAD . '/inc/template-helfer.php';
 require_once OLDENHAUS_PFAD . '/inc/acf-felder.php';
+require_once OLDENHAUS_PFAD . '/inc/seo.php';
 require_once OLDENHAUS_PFAD . '/inc/dashboard-hinweise.php';

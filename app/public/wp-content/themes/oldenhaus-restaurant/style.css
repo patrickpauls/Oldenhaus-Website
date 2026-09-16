@@ -60,6 +60,47 @@ Requires PHP: 8.0
      dort direkt notiert; hier als Token, damit sie nicht zweimal im Code steht. */
   --c-punkte: #CDB99C;
 
+  /*
+    Anruf-Button (CTA).
+
+    Die Namen weichen bewusst von der --c-*-Konvention ab: Der Kunde hat genau
+    diese drei Bezeichnungen verlangt, um seinen Button wiederzufinden. Eine
+    Umbenennung auf --c-cta-* wäre sauberer im Schema, aber der Wiedererkennungs-
+    wert wiegt hier schwerer als die Einheitlichkeit.
+
+    Warum zwei davon auf andere Tokens zeigen: Ruhefarbe und Textfarbe stammen
+    unverändert aus dem Moodboard. Der Hover-Ton ist neu – ein kräftigeres,
+    satteres Rot statt des bisherigen, grau gebrochenen. Deshalb steht dort ein
+    eigener Wert. Wer den Button umfärben will, ändert nur diese drei Zeilen;
+    die Linkfarben (--c-tomato / --c-tomato-dark) bleiben davon unberührt.
+
+    Kontrast gegen die Beschriftung (--c-cream, WCAG AA verlangt 4,5:1):
+    Ruhe 5,87:1 · Hover 5,25:1.
+  */
+  --color-cta-bg: var(--c-tomato-dark);
+  --color-cta-bg-hover: #B5341A;
+  --color-cta-text: var(--c-cream);
+
+  /*
+    Hintergründe der Abschnitte.
+
+    Bis hierher stand die Farbe direkt an der jeweiligen Regel, und Abschnitte
+    ohne Zusatzklasse hatten gar keine – sie liessen den Body-Hintergrund
+    durchscheinen. Damit war die hellste Fläche der Seite die einzige, die sich
+    nicht ändern liess. Jetzt hat jede Sektion eine ausdrückliche Zuweisung.
+
+    Die Werte sind unverändert; es sind dieselben Farben wie zuvor.
+
+    --color-section-dark ergänzt die drei Namen des Kunden. Der dunkle Abschnitt
+    und die Fusszeile tragen heute denselben Ton – über ein gemeinsames Token
+    wären sie aber aneinandergekettet, und ein dunkleres Band hätte ungefragt
+    auch die Fusszeile umgefärbt. Zwei Entscheidungen, zwei Tokens.
+  */
+  --color-section-light: var(--c-cream);
+  --color-section-alt: var(--c-wood);
+  --color-section-dark: var(--c-walnut);
+  --color-footer-bg: var(--c-walnut);
+
   /* Schrift */
   --f-head: "Alegreya Sans", "Trebuchet MS", sans-serif;
   --f-body: "Source Sans 3", "Segoe UI", sans-serif;
@@ -70,6 +111,23 @@ Requires PHP: 8.0
   --fs-small: 1rem;
   --lh-body: 1.6;
 
+  /*
+    Kopfzeile.
+
+    Die Navigationslinks standen am Desktop auf 1,02rem und waren damit kleiner
+    als der Fliesstext – auf einem grossen Bildschirm der am schlechtesten
+    lesbare Text der ganzen Seite. Jetzt ein Wert für alle Breiten: 18 px,
+    dasselbe Mass wie --fs-body.
+
+    Die Wortmarke wächst im selben Verhältnis mit (Faktor ~1,10), sonst
+    verschöbe sich das Gewicht in der Kopfzeile. --fs-wortmarke-klein gehört zur
+    Wortmarke: die Unterzeile „Restaurant · Pizzeria". Beide gehören zusammen,
+    getrennt geändert kippt das Verhältnis.
+  */
+  --fs-nav: 1.125rem;
+  --fs-wortmarke: 1.6rem;
+  --fs-wortmarke-klein: .8rem;
+
   /* Form – bewusst nicht überall derselbe Radius */
   --r-img: 18px;
   --r-btn: 8px;
@@ -79,13 +137,19 @@ Requires PHP: 8.0
   /* Abstände */
   --gutter: 20px;
   --abschnitt: 56px;
-  --kopfhoehe: 68px;
+  /* Vier Pixel mehr als zuvor: Die grössere Wortmarke samt Unterzeile misst
+     jetzt rund 48 px, der Rest bleibt Luft nach oben und unten. */
+  --kopfhoehe: 72px;
 }
 
 @media (min-width: 560px) {
   :root {
     --gutter: 24px;
-    --kopfhoehe: 76px;
+    /* Wortmarke 30 px + 3 px Abstand + 22 px Unterzeile = 55 px.
+       84 px lassen oben und unten je gut 14 px stehen. */
+    --kopfhoehe: 84px;
+    --fs-wortmarke: 1.875rem;
+    --fs-wortmarke-klein: .85rem;
   }
 }
 
@@ -241,19 +305,35 @@ img {
   padding-inline: var(--gutter);
 }
 
-.abschnitt { padding-block: var(--abschnitt); }
+/*
+  Jeder Abschnitt trägt seine Hintergrundfarbe ausdrücklich – auch der helle.
+  Vorher hatte er gar keine und liess den Body durchscheinen; die häufigste
+  Fläche der Startseite war damit die einzige, die sich nicht umfärben liess.
+*/
+.abschnitt {
+  padding-block: var(--abschnitt);
+  background: var(--color-section-light);
+}
 
 /* Abwechselnd helle und abgesetzte Flächen, damit die Seite Rhythmus bekommt. */
-.abschnitt--holz { background: var(--c-wood); }
+.abschnitt--holz { background: var(--color-section-alt); }
 
 .abschnitt--dunkel {
-  background: var(--c-walnut);
+  background: var(--color-section-dark);
   color: var(--c-cream);
 }
 .abschnitt--dunkel h2,
 .abschnitt--dunkel h3 { color: var(--c-cream); }
 .abschnitt--dunkel p { color: var(--c-wood); }
-.abschnitt--dunkel a { color: var(--c-apricot); }
+
+/*
+  Links im dunklen Band bekommen den hellen Akzent – der Anruf-Button aber
+  nicht. Er bringt seine eigene Textfarbe mit, und "0-2-0 schlägt 0-1-0" hätte
+  sie überschrieben: apricotfarbene Schrift auf dem roten Button, 3,66:1 und
+  damit unter der Grenze. `:not(.btn)` nimmt ihn aus der Regel heraus, statt
+  seine Farbe anderswo mit noch mehr Spezifität zurückzuholen.
+*/
+.abschnitt--dunkel a:not(.btn) { color: var(--c-apricot); }
 
 .abschnitt__kopf { margin-bottom: 28px; }
 .abschnitt__kopf p { margin-top: 12px; }
@@ -283,13 +363,21 @@ img {
    5 · Buttons
    ========================================================================== */
 
+/*
+  Der Anruf-Button – Kopfzeile, Hero und Fusszeile benutzen dieselbe Klasse.
+
+  Die Farben kommen ausschliesslich aus den drei --color-cta-*-Tokens in
+  Abschnitt 1; hier steht kein Farbwert mehr. Bewusst deckend und ohne
+  Schlagschatten: Der Button ist die wichtigste Handlung der Seite und soll
+  wie eine Fläche wirken, nicht wie ein Effekt.
+*/
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: var(--c-tomato);
-  color: var(--c-cream);
+  background: var(--color-cta-bg);
+  color: var(--color-cta-text);
   font-family: var(--f-body);
   font-weight: 600;
   font-size: 1.05rem;
@@ -305,9 +393,27 @@ img {
 
 .btn:hover,
 .btn:focus-visible {
-  background: var(--c-tomato-dark);
-  color: var(--c-cream);
+  background: var(--color-cta-bg-hover);
+  color: var(--color-cta-text);
 }
+
+/*
+  Tastatur: Der Fokusrahmen aus Abschnitt 3 sitzt aussen und hebt sich in
+  Apricot vom Rot ab. Hier steht er nochmal ausdrücklich, weil er der einzige
+  Hinweis ist, den ein Tastaturnutzer bekommt – er darf nicht versehentlich
+  verlorengehen, wenn jemand später am Button schraubt.
+*/
+.btn:focus-visible {
+  outline: 3px solid var(--c-apricot);
+  outline-offset: 2px;
+}
+
+/*
+  Gedrückt. Am Telefon bleibt :hover nach dem Antippen oft hängen; der Sprung
+  zurück auf den ruhigen, dunkleren Ton gibt trotzdem eine spürbare Rückmeldung.
+  Ohne vierte Farbe – es ist derselbe Ton wie im Ruhezustand.
+*/
+.btn:active { background: var(--color-cta-bg); }
 
 .btn svg {
   width: 18px;
@@ -321,14 +427,30 @@ img {
   Bewusst kein Link: Ein Button, der ins Leere führt, ist für Gäste schlechter
   als ein ehrlicher Hinweis. `color: inherit` sorgt dafür, dass er sowohl auf
   hellem als auch auf dunklem Grund lesbar bleibt.
+
+  Zur doppelten Klasse: `.btn--ohne-nummer` allein wiegt 0-1-0 und verlor damit
+  gegen `.btn:hover` mit 0-2-0 – der Platzhalter färbte sich beim Überfahren
+  rot und sah aus wie ein funktionierender Button. Genau das war der „halb
+  durchsichtige Knopf", über den der Kunde gestolpert ist. `.btn.btn--ohne-nummer`
+  wiegt selbst 0-2-0 und steht später in der Datei, die Zustandsregeln darunter
+  wiegen 0-3-0. Damit ist es über die Kaskade entschieden und braucht kein
+  !important.
 */
-.btn--ohne-nummer {
+.btn.btn--ohne-nummer {
   background: transparent;
   border: 2px dashed currentColor;
   color: inherit;
   opacity: .8;
   cursor: default;
   font-weight: 400;
+}
+
+/* Kein Zustand: Der Platzhalter ist kein Link und reagiert auf nichts. */
+.btn.btn--ohne-nummer:hover,
+.btn.btn--ohne-nummer:focus-visible,
+.btn.btn--ohne-nummer:active {
+  background: transparent;
+  color: inherit;
 }
 
 
@@ -344,6 +466,15 @@ img {
   display: flex;
   align-items: center;
   transition: background-color .35s ease;
+  /*
+    Alles in der Kopfzeile steht auf dunklem Grund – Wortmarke, Navigation und
+    Menüknopf setzen die helle Farbe deshalb schon einzeln. Der Anruf-Button im
+    Zustand „Telefonnummer folgt" tat das nicht: Er erbt (`color: inherit`), und
+    geerbt wurde bis hier die Textfarbe des Body. Das ergab --c-ink auf
+    --c-walnut, 1,17:1 – der Hinweis war praktisch unsichtbar. Einmal an der
+    Kopfzeile gesetzt stimmt die Vererbung für alles, was noch dazukommt.
+  */
+  color: var(--c-cream);
 }
 
 /*
@@ -359,13 +490,18 @@ img {
 .site-header .wrap {
   display: flex;
   align-items: center;
-  gap: 12px;
+  /* Vier Pixel mehr, seit Wortmarke und Navigation grösser sind. Der Platz ist
+     da: Aus den Schriftdateien nachgemessen belegen Wortmarke, drei
+     Navigationspunkte und der Anruf-Button zusammen 565 px. Bei 1280 px stehen
+     1072 px zur Verfügung, am engsten Punkt (820 px, wo die Navigation waagerecht
+     wird) noch 772 px. Es bleiben 507 bzw. 207 px übrig. */
+  gap: 16px;
 }
 
 .wortmarke {
   font-family: var(--f-head);
   font-weight: 800;
-  font-size: 1.45rem;
+  font-size: var(--fs-wortmarke);
   color: var(--c-cream);
   text-decoration: none;
   line-height: 1;
@@ -378,27 +514,34 @@ img {
   display: block;
   font-family: var(--f-body);
   font-weight: 400;
-  font-size: .75rem;
+  font-size: var(--fs-wortmarke-klein);
   letter-spacing: .02em;
   opacity: .85;
   margin-top: 3px;
 }
 
+/*
+  Das Logo wächst mit der Kopfzeile mit, statt bei starren 48 px zu bleiben –
+  sonst sässe es ab 560 px als kleiner Klotz in einer hohen Zeile. 56 px lassen
+  in der 84 px hohen Kopfzeile oben und unten je 14 px Luft.
+*/
 .wortmarke--logo img {
   max-height: 48px;
   width: auto;
 }
 
 @media (min-width: 560px) {
-  .wortmarke { font-size: 1.7rem; }
-  .wortmarke small { font-size: .8rem; }
+  .wortmarke--logo img { max-height: 56px; }
 }
 
 /* --- Anruf-Button in der Kopfzeile ------------------------------------- */
 
 .header-call {
-  padding: 9px 14px;
-  font-size: 1rem;
+  /* Etwas mehr Polster als bisher (9/14), damit der Button neben der grösseren
+     Wortmarke nicht zusammengeschrumpft wirkt. Die 44 px Trefferfläche sind
+     dadurch nicht mehr nur rechnerisch erfüllt, sondern auch optisch. */
+  padding: 11px 18px;
+  font-size: var(--fs-small);
   min-height: 44px;
 }
 
@@ -491,7 +634,7 @@ img {
   color: var(--c-cream);
   text-decoration: none;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: var(--fs-nav);
   /* Grosszügige Trefferfläche für Daumen. */
   padding: 12px 4px;
 }
@@ -524,10 +667,12 @@ img {
     gap: 26px;
   }
 
-  .hauptnav a {
-    padding: 4px 0;
-    font-size: 1.02rem;
-  }
+  /*
+    Nur der Innenabstand wird waagerecht gedreht – die Schriftgrösse kommt
+    unverändert aus --fs-nav. Vorher stand hier 1,02rem und damit *kleiner* als
+    am Telefon: Ausgerechnet der grosse Bildschirm bekam die kleinste Schrift.
+  */
+  .hauptnav a { padding: 4px 0; }
 }
 
 
@@ -558,11 +703,18 @@ img {
   }
 }
 
+/*
+  Der Hero ist die einzige Sektion ohne flächige Farbe – seinen Hintergrund
+  bilden die Fotos. Was hier steht, ist der Grund darunter: sichtbar, solange
+  noch kein Bild hinterlegt ist oder eines nicht lädt. Er hängt am selben Token
+  wie das dunkle Band, damit die Startseite nicht zweistimmig wird, wenn der
+  Kunde die dunklen Flächen nachjustiert.
+*/
 .hero__bilder {
   position: absolute;
   inset: 0;
   z-index: -2;
-  background: var(--c-walnut);
+  background: var(--color-section-dark);
 }
 
 .hero__bild {
@@ -736,7 +888,17 @@ img {
    9 · Speisekarte
    ========================================================================== */
 
-.karte { max-width: 760px; margin-inline: auto; }
+/*
+  Der Innenabstand nach unten ersetzt den Aussenabstand, den die Fusszeile
+  früher mitbrachte (siehe Abschnitt 12). Die Speisekarte ist die einzige
+  Vorlage, die ihren Inhalt nicht in einen `.abschnitt` legt – ohne diese Zeile
+  klebte das letzte Gericht direkt an der dunklen Fusszeile.
+*/
+.karte {
+  max-width: 760px;
+  margin-inline: auto;
+  padding-bottom: var(--abschnitt);
+}
 
 .karte__einleitung { margin-top: 12px; }
 
@@ -957,11 +1119,27 @@ img {
   12 · Fusszeile
    ========================================================================== */
 
+/*
+  Kein margin-top mehr.
+
+  Bis hierher stand hier `margin-top: var(--abschnitt)`. Auf der Startseite
+  endet die Seite mit dem Fragen-Abschnitt, und der bringt über `.abschnitt`
+  bereits 72 px eigenen Innenabstand mit. Der Aussenabstand kam obendrauf –
+  und weil ein Aussenabstand durchsichtig ist, schob er zwischen dem beigen
+  Band und der dunklen Fusszeile einen 72 px hohen Streifen Body-Hintergrund
+  hervor. Das war der leere Streifen, den der Kunde gesehen hat.
+
+  Bewusst nicht mit einem negativen Abstand überdeckt: Der Abstand war nie
+  falsch platziert, er war doppelt. Die Regel dafür lautet ab jetzt: Der letzte
+  Inhaltsblock einer Seite bringt seinen Abstand nach unten selbst mit. Alle
+  Vorlagen enden auf `.abschnitt` und tun das – bis auf die Speisekarte, die
+  ihre Liste direkt in `.wrap` legt; dort steht der Abstand jetzt an `.karte`
+  (Abschnitt 9). Wer eine neue Vorlage baut, muss daran denken.
+*/
 .site-footer {
-  background: var(--c-walnut);
+  background: var(--color-footer-bg);
   color: var(--c-cream);
   padding-block: var(--abschnitt) 28px;
-  margin-top: var(--abschnitt);
 }
 
 .site-footer h2 {
@@ -970,7 +1148,33 @@ img {
   margin-bottom: 10px;
 }
 
-.site-footer a { color: var(--c-apricot); }
+/*
+  Wie im dunklen Band: der Anruf-Button ist ausgenommen. `.site-footer a` wiegt
+  0-2-0 und hätte die Textfarbe aus `.btn` (0-1-0) überschrieben – der Button in
+  der Spalte „Tisch reservieren" bekäme apricotfarbene Schrift auf Rot, 3,66:1.
+  Heute fällt das nicht auf, weil ohne Telefonnummer ein <span> statt eines
+  Links ausgegeben wird; sobald die Nummer eingetragen ist, wäre es sichtbar.
+*/
+.site-footer a:not(.btn) { color: var(--c-apricot); }
+
+/*
+  Instagram-Verweis. Symbol und Wort stehen als eine Einheit auf der
+  Schriftlinie; `align-items: center` richtet das quadratische Symbol mittig
+  zur Zeile aus, statt es an der Grundlinie hängen zu lassen.
+*/
+.instagram-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Etwas kleiner als das Symbol im Button (18 px) – hier steht es neben
+   Fliesstext und nicht in einer Schaltfläche. */
+.instagram-link svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
 
 .site-footer__spalten {
   display: grid;

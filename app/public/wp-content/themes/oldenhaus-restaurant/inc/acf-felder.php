@@ -9,6 +9,10 @@
  * Die Felder der Inhaltstypen (Gericht, Kategorie, Frage) liegen im Plugin
  * „Restaurant-Basis", damit sie einen Theme-Wechsel überleben.
  *
+ * Nicht hier, sondern in inc/seo.php: die Feldgruppe „Suchmaschinen (SEO)". Sie hängt
+ * an keiner Vorlage, sondern gilt für jede Seite, und sie wird ausschließlich von dem
+ * Code gelesen, der in derselben Datei steht. Die Begründung steht dort ausführlich.
+ *
  * @package Oldenhaus
  */
 

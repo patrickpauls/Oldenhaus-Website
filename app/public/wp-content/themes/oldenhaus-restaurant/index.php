@@ -19,7 +19,23 @@ get_header();
 	<?php if ( have_posts() ) : ?>
 
 		<header class="seitenkopf">
-			<h1><?php echo esc_html( wp_get_document_title() ); ?></h1>
+			<?php
+			/*
+			 * Bewusst nicht wp_get_document_title(): Der Seitentitel trägt seit
+			 * inc/seo.php den Zusatz „| Oldenhaus" – als Überschrift auf der Seite
+			 * gelesen ergäbe das „Suche nach … | Oldenhaus". Der Titel im Browsertab
+			 * und die Überschrift im Text haben verschiedene Aufgaben.
+			 */
+			?>
+			<h1>
+				<?php
+				if ( is_search() ) {
+					printf( 'Suchergebnisse für „%s"', esc_html( get_search_query() ) );
+				} else {
+					echo esc_html( wp_strip_all_tags( get_the_archive_title() ) );
+				}
+				?>
+			</h1>
 		</header>
 
 		<div class="abschnitt textseite">
@@ -39,8 +55,21 @@ get_header();
 	<?php else : ?>
 
 		<header class="seitenkopf">
-			<h1>Hier ist nichts</h1>
-			<p>Diese Seite gibt es nicht – vielleicht hat sich ein Tippfehler eingeschlichen.</p>
+			<?php
+			/*
+			 * Zwei verschiedene Sackgassen, die hier zusammenlaufen: eine Suche ohne
+			 * Treffer und ein Archiv, aus dem alles verschwunden ist. Beide bekommen
+			 * denselben Weg zurück, aber nicht denselben Satz – „diese Seite gibt es
+			 * nicht" wäre bei einer Suche schlicht gelogen.
+			 */
+			?>
+			<?php if ( is_search() ) : ?>
+				<h1>Nichts gefunden</h1>
+				<p>Zu „<?php echo esc_html( get_search_query() ); ?>" haben wir nichts. Vielleicht steht es auf der Speisekarte.</p>
+			<?php else : ?>
+				<h1>Hier ist nichts</h1>
+				<p>Diese Seite gibt es nicht – vielleicht hat sich ein Tippfehler eingeschlichen.</p>
+			<?php endif; ?>
 		</header>
 
 		<div class="abschnitt">

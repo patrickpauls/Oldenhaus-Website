@@ -137,6 +137,23 @@ function oldenhaus_offene_punkte(): array {
 		);
 	}
 
+	/*
+	 * Das Website-Icon – das kleine Bild im Browser-Tab, in den Lesezeichen und auf dem
+	 * Startbildschirm, wenn jemand die Seite aufs Handy legt.
+	 *
+	 * Bewusst nicht vom Theme mitgeliefert: Ein erfundenes Symbol wäre eine Marke, die
+	 * sich niemand ausgesucht hat, und es aus dem Schriftzug zu bauen ergäbe bei 32
+	 * Pixeln Kantenlänge nur einen grauen Fleck. Es fehlt aus demselben Grund wie das
+	 * Logo – und verschwindet aus dieser Liste, sobald eines hochgeladen ist.
+	 */
+	if ( ! has_site_icon() ) {
+		$punkte[] = array(
+			'text'      => '<strong>Kein Website-Icon hinterlegt.</strong> Das ist das kleine Bild im Browser-Tab und auf dem Handy-Startbildschirm. Ein quadratisches Bild ab 512 × 512 Pixeln genügt – am besten ein Ausschnitt des Logos, sobald es vorliegt.',
+			'link'      => admin_url( 'options-general.php' ),
+			'link_text' => 'Website-Icon festlegen',
+		);
+	}
+
 	$punkte[] = array(
 		'text'      => '<strong>Die Fotos sind Übergangsbilder.</strong> Sie stammen aus einer freien Bilddatenbank und sollten nach dem Fototermin gegen eigene Aufnahmen getauscht werden. Das geht überall direkt in der Mediathek, ohne Änderungen am Code.',
 		'link'      => admin_url( 'upload.php' ),

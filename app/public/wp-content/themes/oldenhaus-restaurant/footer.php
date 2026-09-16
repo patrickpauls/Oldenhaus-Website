@@ -52,10 +52,17 @@ $oldenhaus_instagram = oldenhaus_instagram();
 						 * Bewusst ein einfacher Link statt eines eingebetteten Feeds.
 						 * Ein Feed würde Inhalte von Instagram nachladen und damit eine
 						 * Einwilligung nach TTDSG §25 erfordern.
+						 *
+						 * Das Symbol ist aria-hidden und liegt vor dem Wort. Vorgelesen
+						 * und angesprungen wird der Link über „Instagram" – das Symbol
+						 * ist Schmuck, nicht Information.
 						 */
 						?>
-						<a href="<?php echo esc_url( $oldenhaus_instagram ); ?>" rel="noopener noreferrer nofollow" target="_blank">
-							Wir auf Instagram
+						<a class="instagram-link" href="<?php echo esc_url( $oldenhaus_instagram ); ?>" rel="noopener noreferrer nofollow" target="_blank">
+							<?php
+							echo oldenhaus_instagram_symbol(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- feste Zeichenkette aus oldenhaus_instagram_symbol().
+							?>
+							<span>Instagram</span>
 						</a>
 					</p>
 				<?php endif; ?>

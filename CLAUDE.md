@@ -116,6 +116,7 @@ oEmbed-Erkennung. Wird bei jeder Abnahme neu geprueft, siehe „Pruefungen".
 - [x] Bilder: 15 Uebergangsbilder aus der WordPress-Fotodatenbank (CC0)
 - [x] Haertung inkl. XML-RPC-Sperre und Login-Begrenzung
 - [x] Unabhaengige Review durch einen Subagenten, Befunde behoben
+- [x] Feedback-Runde 1 des Kunden (Design) und Basis-SEO
 - [ ] GitHub (SSH-Schluessel erzeugt, wartet auf Hinterlegung bei GitHub)
 
 ### Gepruefte Ergebnisse
@@ -135,6 +136,9 @@ oEmbed-Erkennung. Wird bei jeder Abnahme neu geprueft, siehe „Pruefungen".
 | Fehlerprotokoll | liegt ausserhalb des Webordners (`logs/php/wp-fehler.log`), `wp-content/debug.log` liefert 404 |
 | Anmeldename | in Quelltext, Feed, Sitemap, REST und oEmbed nicht mehr auffindbar |
 | Inline-Styles | im Frontend keine. Im Backend neun style-Attribute fuer kleine Farbmarkierungen in Uebersichtslisten - dafuer eine eigene Admin-Stylesheet-Datei anzulegen waere unverhaeltnismaessig. Dazu ein dokumentierter style-Block in header.php fuer den Fall ohne JavaScript. |
+| SEO-Grundlagen | je Seite genau ein `<title>`, ein Canonical, eine Beschreibung, eine `<h1>`. `lang="de-DE"`. JSON-LD nur auf der Startseite und valides JSON |
+| Robots | Inhaltsseiten `index, follow`; Impressum, Datenschutz, 404, Suche und leere Archive `noindex, follow` |
+| Sitemap | `/wp-sitemap.xml` liefert 200 (vorher 404, siehe Fund unten). Nicht vorhandene Sitemaps weiterhin 404 |
 
 ### Unabhaengige Review
 
@@ -214,6 +218,157 @@ Entwicklungsumgebung und darf ohnehin nicht mit auf den Zielserver.
 
 ---
 
+## Feedback-Runde 1 (Design) und Basis-SEO
+
+Beides in einem Durchgang, von zwei Subagenten mit getrennter Dateihoheit gebaut.
+
+### Wo der Kunde Farben selbst aendert
+
+Alle Farben liegen als Tokens in `style.css`, Abschnitt 1. **Keine Hex-Werte in
+einzelnen Selektoren.** Die Namen `--color-*` weichen bewusst von der sonstigen
+`--c-*`-Konvention ab: Der Kunde hat sie so benannt bekommen und soll sie wiederfinden.
+
+| Zweck | Token | style.css |
+|---|---|---|
+| CTA-Button Ruhe | `--color-cta-bg` | 80 |
+| CTA-Button Hover | `--color-cta-bg-hover` | 81 |
+| CTA-Button Text | `--color-cta-text` | 82 |
+| Helle Abschnitte | `--color-section-light` | 99 |
+| Beige Abschnitte | `--color-section-alt` | 100 |
+| Dunkles Band | `--color-section-dark` | 101 |
+| Fusszeile | `--color-footer-bg` | 102 |
+
+`--color-section-dark` ist ergaenzt worden, obwohl der Kunde nur drei Namen genannt
+hat: Das dunkle Band und die Fusszeile tragen denselben Ton, haengen ueber ein
+gemeinsames Token aber aneinander – ein dunkleres Band haette ungefragt auch die
+Fusszeile umgefaerbt. Zwei Entscheidungen, zwei Tokens.
+
+### Der leere Streifen vor der Fusszeile
+
+`.site-footer` hatte `margin-top: var(--abschnitt)`, obwohl jeder `.abschnitt` seinen
+Abstand ueber `padding-block` schon selbst mitbringt. Ein Aussenabstand ist durchsichtig,
+also stand zwischen dem beigen FAQ-Band und der dunklen Fusszeile ein 72 px hoher
+Streifen cremefarbener Body-Hintergrund. Der Abstand war nie falsch platziert – er war
+doppelt. Ersatzlos entfernt.
+
+**Daraus wird eine Konvention fuer kuenftige Seitenvorlagen:** Der letzte Inhaltsblock
+einer Seite bringt seinen Abstand nach unten selbst mit. Alle Vorlagen enden auf einem
+`.abschnitt` und tun das – ausser der Speisekarte, die ihre Liste direkt in `.wrap`
+legt; sie hat deshalb `.karte { padding-bottom: var(--abschnitt) }` bekommen.
+
+### Drei latente Fehler, die erst mit der Telefonnummer sichtbar geworden waeren
+
+Der Kunde meldete einen „durchsichtigen Button, der erst beim Hovern rot wird". Ursache
+war nicht der Button, sondern sein **Platzhalter**: Ohne hinterlegte Telefonnummer gibt
+`oldenhaus_anruf_button()` `<span class="btn btn--ohne-nummer">` aus. Beim Nachgehen
+fielen drei Fehler auf, die alle erst aufgefallen waeren, wenn die Nummer eingetragen ist:
+
+1. **`.btn:hover` (0-2-0) schlug `.btn--ohne-nummer` (0-1-0)** – der Platzhalter leuchtete
+   beim Ueberfahren rot auf wie ein echter Knopf. Jetzt `.btn.btn--ohne-nummer`.
+2. **Der Platzhalter war in der Kopfzeile unsichtbar.** `color: inherit` erbte bis zum
+   `body` durch: `--c-ink` auf `--c-walnut` = **1,17:1**. `.site-header` setzt jetzt
+   ausdruecklich `color: var(--c-cream)` → 8,20:1.
+3. **Der Footer-Button haette apricotfarbene Schrift bekommen.** `.site-footer a` (0-2-0)
+   haette die Textfarbe aus `.btn` (0-1-0) ueberschrieben → 3,66:1. Gelöst ueber
+   `:not(.btn)` an der Link-Regel, statt die Buttonfarbe mit noch mehr Spezifitaet
+   zurueckzuholen.
+
+Merksatz fuer dieses Theme: Zustandsregeln (`:hover`) wiegen schwerer als
+Varianten-Klassen. Eine Variante, die einen Zustand ueberstimmen soll, braucht die
+doppelte Klasse.
+
+### SEO liegt in `inc/seo.php`, auch die Feldgruppe
+
+Alles in **einer** Datei: Felddefinition, Ausgabe und Filter. Begruendung: Die anderen
+ACF-Gruppen in `inc/acf-felder.php` haengen je an genau einer Vorlage und sind ohne sie
+sinnlos; die SEO-Gruppe gilt fuer jede Seite und wird nur von Code gelesen, der
+zwanzig Zeilen darueber steht. Bekommt die Website eines Tages doch ein SEO-Plugin, wird
+eine Datei geloescht und eine `require_once`-Zeile entfernt – ohne Reste. In
+`inc/acf-felder.php` steht ein Querverweis, damit niemand raetselt.
+
+**Neu im Backend:** Seiten → Seite bearbeiten → Kasten „Suchmaschinen (SEO)" mit
+SEO-Titel, SEO-Beschreibung und dem Schalter „Von Suchmaschinen ausschliessen".
+Alle drei duerfen leer bleiben; dann greifen seitenbezogene Entwuerfe aus dem Code.
+
+**Impressum und Datenschutz auf `noindex` – ohne harte IDs.** Drei Wege absteigend nach
+Verlaesslichkeit: das Haekchen an der Seite selbst (haengt am Beitrag, uebersteht
+Umbenennen und Verschieben), `get_option( 'wp_page_for_privacy_policy' )` fuer den
+Datenschutz, und ein Namensmuster als Netz. Harte IDs waeren der einzige Weg gewesen,
+bei dem ein Fehler unsichtbar bleibt – eine fehlende Robots-Angabe faellt niemandem auf.
+
+**Keine Oeffnungszeiten in den Beschreibungstexten.** Ein handgepflegtes Feld veraltet,
+sobald der Kunde die Zeiten aendert, und eine falsche Uhrzeit im Suchergebnis ist
+schlechter als keine. Die Zeiten stehen im JSON-LD und kommen dort live aus
+„Kontakt & Zeiten".
+
+### Ein Fund: `/wp-sitemap.xml` lieferte korrektes XML mit Status 404
+
+Die Google Search Console lehnt eine so ausgelieferte Sitemap ab, ohne sie zu lesen –
+und die `robots.txt` verweist darauf. Ursache: `WP::handle_404()` setzt den Status,
+**bevor** die Sitemap gerendert wird, allein danach, ob die Abfrage Beitraege gefunden
+hat. Auf einer Website mit Blog liefert sie die letzten Beitraege; diese hat bewusst
+**null Beitraege** → Liste leer → 404. `WP_Sitemaps::render_sitemaps()` setzt danach zwar
+`$wp_query->is_404` zurueck, den bereits gesendeten Statuscode holt es nicht mehr ein.
+Behoben ueber `pre_handle_404`.
+
+Der erste Versuch dabei war selbst ein Fehler und ist es wert, festgehalten zu werden:
+Der Filter winkte anfangs *jede* Sitemap-Adresse durch – prompt antwortete
+`/wp-sitemap-users-1.xml` (Anbieter eigentlich abgemeldet) mit **HTTP 200 und einer
+indexierbaren HTML-Seite**. Aus einem 404 waere eine Fundstelle geworden. Jetzt wird
+geprueft, ob es die angefragte Sitemap ueberhaupt gibt.
+
+### Bewusst nicht gebaut
+
+- **Kein `noindex` auf Anhangseiten.** `oldenhaus_anhangseiten_umleiten()` haengt an
+  `template_redirect`, `wp_robots` an `wp_head` – letzteres wird nie erreicht.
+  Nachgemessen: `?attachment_id=33` → 301. Ein `noindex` waere nachweislich toter Code.
+- **Kein Anhang-Filter fuer die Sitemap.** Der Kern tut das schon, und beide eigenen
+  Post Types sind `public => false`.
+- **Kein `loading`/`fetchpriority`-Filter.** Das Hero-Bild hat `eager` +
+  `fetchpriority="high"` bereits aus dem Template, alle uebrigen Bilder `lazy` mit
+  Massen. Ein Filter haette nur bestehendes Verhalten ueberschrieben – und den in
+  diesem Handbuch dokumentierten `srcset`-Fallstrick riskiert.
+- **Kein Favicon erfunden.** Es liegt kein Logo vor; ein Icon zu erfinden hiesse, eine
+  Marke zu erfinden. Stattdessen ein Eintrag im Dashboard-Widget, der von selbst
+  verschwindet, sobald ein Website-Icon hinterlegt ist.
+- **Kein hreflang.** Die Website ist einsprachig.
+- **Hero-Bilder behalten `alt=""`.** Es ist eine rotierende Kreuzblende hinter der `<h1>`;
+  die Mediathek-Texte sind gepflegt, wuerden aber ein Bild beschreiben, das nach
+  Sekunden wechselt. Umkehrbar in einer Zeile in `template-parts/startseite/hero.php`,
+  falls das erste Bild doch seinen Text bekommen soll.
+
+### `lang="de"` → `lang="de-DE"`
+
+Der Ausgangswert `de` war kein Fehler, sondern eine Entscheidung des deutschen
+Uebersetzungsteams – dieselbe Uebersetzung laeuft in DE, AT und CH. Diese Website
+richtet sich an eine Region, also ist die vollstaendige Kennung genauer, und sie passt
+zu `og:locale = de_DE`. Gebildet aus `get_locale()`, nicht fest verdrahtet, und nur wenn
+sauberes `xx-YY` herauskommt (`de_DE_formal` ergaebe sonst ungueltiges `de-DE-formal`).
+
+Technische Fussnote, damit es niemand ein zweites Mal versucht: Der naheliegende Filter
+`bloginfo` laeuft ins Leere – `get_bloginfo()` wendet ihn nur bei `$filter = 'display'`
+an, `get_language_attributes()` fragt unformatiert ab. Der richtige Haken ist
+`language_attributes`.
+
+### Offen aus dieser Runde
+
+- **Mobile Navigation von rechts** (Punkt 5 des Feedbacks): auf Ansage nur geprueft,
+  nicht gebaut. Empfehlung ist **Variante C** – `.hauptnav` mit `left: auto; right: 0;
+  width: min(78vw, 300px)` rechts unter dem Menueknopf verankern, rund sechs CSS-Zeilen.
+  Bleibt ein Dropdown, kein Modal: keine Aenderung an `header.php` oder `oldenhaus.js`,
+  keine Fokusfalle noetig, der `<noscript>`-Fallback greift unveraendert. Das echte
+  Einfahren von rechts (Variante B) waere ein halber Tag, weil `hidden` durch Klasse +
+  `inert` ersetzt werden muss, der noscript-Fallback bricht und eine Fokusfalle dann
+  Pflicht ist – ein raumhohes Panel ueber dem Inhalt ist ein Dialog.
+- **Kontrast der Navigation ueber dem Hero.** Pixelweise gemessen: im Mittel 10,6–15,0:1,
+  aber am hellsten Punkt des Ofenscheins in `hero-1-pizza-ofen.jpg` **3,70:1**. Die
+  Wortmarke gilt bei 30 px/800 als grosse Schrift (Grenze 3:1) und besteht; die 18-px-
+  Navigationslinks brauchen 4,5:1 und erreichen es an dieser einen Stelle nicht.
+  Bestandsverhalten, durch die Vergroesserung eher besser geworden, und ab 40 px Scroll
+  ist die Kopfzeile ohnehin deckend. Abhilfe waere eine gestalterische Entscheidung:
+  weicher dunkler Verlauf hinter der Kopfzeile (~4 CSS-Zeilen, keine Fremdressource)
+  oder ein Hero-Motiv mit ruhigem oberen Drittel beim Fototermin.
+
 ---
 
 ## Offene Punkte (blockieren den Livegang)
@@ -233,6 +388,9 @@ Entwicklungsumgebung und darf ohnehin nicht mit auf den Zielserver.
 | 11 | Uploads-Schutz | auf dem Zielserver einrichten (lokal nicht testbar) |
 | 12 | Getraenkekarte | liegt nicht vor; Kategorie „Getraenke“ steht leer bereit |
 | 13 | Vegetarisch/vegan | in der gelieferten Karte nicht angegeben, Haekchen daher ungesetzt |
+| 14 | Website-Icon (Favicon) | keins gesetzt, weil kein Logo vorliegt. Dashboard-Hinweis erinnert daran |
+| 15 | SEO-Beschreibungen | sechs Entwuerfe stehen im Backend, freigabepflichtig wie alle Texte |
+| 16 | `srcset` bei vier Bildern | die eigenen Groessen `oldenhaus-hochkant` (4:5) und `oldenhaus-quer` (3:2) haben kein zweites Bild im selben Seitenverhaeltnis, aus dem WordPress ein `srcset` bauen koennte. Auf Retina-Schirmen werden sie hochskaliert. Behebbar ueber 2×-Varianten in `inc/theme-setup.php`, erfordert aber ein Neuerzeugen aller Vorschaubilder |
 
 **Grundsatz bei fehlenden Inhalten:** kein Lorem Ipsum. Fehlt eine Sachaussage – etwa ob
 Hunde erlaubt sind – wird sie nicht erfunden, sondern der Eintrag bleibt Entwurf und
@@ -257,6 +415,20 @@ manche Dateien zur Entwicklungsumgebung gehoeren.
 | Automatische Core-Updates aktiv lassen | Sicherheitsaktualisierungen sollen ohne Zutun ankommen |
 | HTTPS erzwingen und `upgrade-insecure-requests` zur CSP ergaenzen | Lokal bewusst weggelassen, weil die Entwicklungsumgebung ueber http laeuft |
 | Impressum und Datenschutzerklaerung befuellen | Rechtlich zwingend vor der Veroeffentlichung |
+
+### SEO beim Livegang
+
+| # | Aufgabe | Warum |
+|---|---|---|
+| 1 | **Einstellungen → Lesen: „Suchmaschinen davon abhalten…" muss AUS sein** | Lokal steht `blog_public = 1`. Beim Umzug setzen viele Hoster und Staging-Werkzeuge das auf 0. Dann setzt der Kern `noindex, nofollow` auf **jede** Seite, und der eigene Filter laesst das absichtlich stehen – die ganze SEO-Arbeit waere wirkungslos, ohne dass etwas kaputt aussieht. **Erster Punkt nach dem Livegang, per curl gegenpruefen** |
+| 2 | Sitemap in der Google Search Console einreichen | `https://…/wp-sitemap.xml`. Die Domain dabei per **DNS-TXT-Eintrag** bestaetigen, nicht per HTML-Meta-Tag – ein Verifizierungs-Tag im `<head>` waere der erste Fremdbezug der Website und damit das Ende der Banner-Freiheit |
+| 3 | Google-Unternehmensprofil anlegen und verknuepfen | Fuer ein Restaurant der groesste SEO-Hebel ueberhaupt. Adresse, Oeffnungszeiten und Telefonnummer dort **identisch** zu Website und JSON-LD halten, sonst wertet Google die Signale gegeneinander ab |
+| 4 | `robots.txt` pruefen | WordPress erzeugt sie dynamisch und traegt die Sitemap selbst ein. Liegt auf dem Zielserver eine **physische** `robots.txt`, gewinnt die Datei und die Sitemap-Zeile fehlt |
+| 5 | Rich-Results-Test | `search.google.com/test/rich-results` gegen die Startseite. Warnt erwartbar wegen fehlendem `telephone`, solange keine Nummer hinterlegt ist |
+| 6 | Telefonnummer eintragen | Fuer lokale Suche und Google Maps die wichtigste Angabe. Sobald sie in „Kontakt & Zeiten" steht, erscheint sie automatisch im JSON-LD – ohne Code-Aenderung |
+
+`canonical`, `og:url` und die URLs im JSON-LD bilden sich aus `home_url()` und wandern
+beim Wechsel auf HTTPS automatisch mit. Kein Eingriff noetig.
 
 ### Der Fehlersuche-Block fuer die `wp-config.php`
 
@@ -361,3 +533,42 @@ FAQ muessen im Backend erreichbar bleiben.
 
 **Wiederverwendbarkeit:** `grep -ri oldenhaus wp-content/plugins/restaurant-basis/` muss
 leer sein.
+
+**SEO-Grundlagen je Seite** (genau einmal `<title>`, Canonical, Beschreibung, `<h1>`):
+
+```
+B=http://oldenhaus-restaurant.local
+for p in / /speisekarte/ /galerie/ /ueber-uns/ /impressum/ /datenschutzerklaerung/; do
+  S=$(curl -s "$B$p")
+  printf '%-26s title:%s canonical:%s desc:%s h1:%s\n' "$p" \
+    "$(printf '%s' "$S" | grep -c '<title>')" \
+    "$(printf '%s' "$S" | grep -c "rel=.canonical")" \
+    "$(printf '%s' "$S" | grep -c "name=.description")" \
+    "$(printf '%s' "$S" | grep -o '<h1' | wc -l | tr -d ' ')"
+done
+```
+
+Erwartung: ueberall 1. Auf 404 und Suche **kein** Canonical – eine Fehlerseite darf keine
+kanonische Adresse behaupten. Achtung beim Nachbauen: WordPress gibt die Meta-Tags mit
+**einfachen** Anfuehrungszeichen aus, ein `grep 'name="robots"'` findet nichts.
+
+**Sitemap liefert 200, Nichtvorhandenes weiterhin 404:**
+
+```
+for s in /wp-sitemap.xml /wp-sitemap-posts-page-1.xml /wp-sitemap-users-1.xml; do
+  curl -s -o /dev/null -w "$s %{http_code}\n" "http://oldenhaus-restaurant.local$s"
+done
+```
+
+Erwartung: 200, 200, 404.
+
+**JSON-LD ist gueltiges JSON** (nur Startseite, alles in einer Zeile):
+
+```
+curl -s http://oldenhaus-restaurant.local/ | grep 'ld+json' \
+  | sed 's|.*<script type="application/ld+json">||; s|</script>.*||' \
+  | php -r 'json_decode(stream_get_contents(STDIN)); echo json_last_error_msg(), "\n";'
+```
+
+Erwartung: `No error`. `schema.org` darin ist ein Namensraum, **keine** Anfrage – es
+taucht seither in der Drittanbieter-Gegenprobe oben auf und ist dort kein Fund.

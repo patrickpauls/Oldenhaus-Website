@@ -153,6 +153,30 @@ function oldenhaus_telefon_symbol(): string {
 }
 
 /**
+ * Das Instagram-Symbol.
+ *
+ * Gebaut wie oldenhaus_telefon_symbol(): inline im HTML, kein Icon-Font, keine
+ * Bilddatei und vor allem nichts von einem fremden Server. Ein nachgeladenes
+ * Symbol-Set wäre genau die Anfrage, wegen der die Website sonst ein
+ * Einwilligungsbanner bräuchte – für ein einziges Zeichen.
+ *
+ * Anders als der Telefonhörer ist dies eine Kontur und keine Fläche: Das
+ * Instagram-Zeichen besteht aus Rahmen, Kreis und Punkt und bliebe als Fläche
+ * bei 17 Pixeln ein unlesbarer Klecks. `currentColor` an Strich und Füllung
+ * sorgt dafür, dass es die Farbe des Links übernimmt – auch im Hover.
+ *
+ * aria-hidden, weil direkt daneben „Instagram" steht: Eine Vorlesehilfe soll
+ * das Ziel einmal nennen und nicht zweimal.
+ */
+function oldenhaus_instagram_symbol(): string {
+	return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+		. '<rect x="3" y="3" width="18" height="18" rx="5.2"/>'
+		. '<circle cx="12" cy="12" r="4.1"/>'
+		. '<circle cx="17.3" cy="6.7" r="1.15" fill="currentColor" stroke="none"/>'
+		. '</svg>';
+}
+
+/**
  * Gibt den Anruf-Button aus.
  *
  * Ist noch keine Telefonnummer hinterlegt, erscheint bewusst kein Link, sondern ein
