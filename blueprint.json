@@ -13,6 +13,31 @@
         "path": "app/public/wp-content/themes/oldenhaus-restaurant"
       },
       "options": { "activate": true }
+    },
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "git:directory",
+        "url": "https://github.com/patrickpauls/Oldenhaus-Website",
+        "ref": "main",
+        "path": "app/public/wp-content/plugins/restaurant-basis"
+      },
+      "options": { "activate": true }
+    },
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "wordpress.org/plugins",
+        "slug": "advanced-custom-fields"
+      },
+      "options": { "activate": true }
+    },
+    {
+      "step": "importWxr",
+      "file": {
+        "resource": "url",
+        "url": "https://raw.githubusercontent.com/patrickpauls/Oldenhaus-Website/main/oldenhausrestaurant.WordPress.2026-10-01.xml"
+      }
     }
   ]
 }
