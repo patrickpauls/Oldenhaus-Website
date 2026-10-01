@@ -1,0 +1,18 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "landingPage": "/",
+  "login": true,
+  "features": { "networking": true },
+  "steps": [
+    {
+      "step": "installTheme",
+      "themeData": {
+        "resource": "git:directory",
+        "url": "https://github.com/patrickpauls/Oldenhaus-Website",
+        "ref": "main",
+        "path": "app/public/wp-content/themes/oldenhaus-restaurant"
+      },
+      "options": { "activate": true }
+    }
+  ]
+}
